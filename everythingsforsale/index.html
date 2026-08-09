@@ -1,0 +1,1151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<title>EVERYTHING'S FOR SALE</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a;
+    --ink:#eef1f6; --muted:#9aa4b2; --accent:#ff8a3d; --accent2:#ffb347;
+    --good:#4bd07a; --sold:#ff5566; --chip:#232833; --radius:14px;
+    --maxw:720px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-text-size-adjust:100%;
+  }
+  a{color:var(--accent2)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 14px 96px}
+  header.top{
+    position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#0f1115,#0f1115ee);
+    backdrop-filter:blur(6px);border-bottom:1px solid var(--line);
+  }
+  .brand{max-width:var(--maxw);margin:0 auto;padding:12px 14px 6px;display:flex;align-items:center;gap:10px}
+  .brand h1{font-size:20px;letter-spacing:.5px;margin:0;font-weight:800}
+  .brand h1 .fs{color:var(--accent)}
+  .brand .tag{font-size:12px;color:var(--muted);margin-top:2px}
+  .tabs{max-width:var(--maxw);margin:0 auto;display:flex;gap:6px;padding:6px 10px 10px;overflow:auto}
+  .tabs button{
+    flex:0 0 auto;background:var(--chip);color:var(--muted);border:1px solid var(--line);
+    padding:8px 14px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer
+  }
+  .tabs button.active{background:var(--accent);color:#1a1200;border-color:var(--accent)}
+  section.tabpane{display:none;padding-top:14px}
+  section.tabpane.active{display:block}
+
+  /* controls */
+  .controls{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+  .search{display:flex;gap:8px}
+  input,select,textarea,button{font:inherit}
+  input.text,select,textarea{
+    width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;outline:none
+  }
+  input.text:focus,textarea:focus,select:focus{border-color:var(--accent)}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .catchips{display:flex;gap:8px;overflow:auto;padding-bottom:2px}
+  .catchips button{
+    flex:0 0 auto;background:var(--chip);border:1px solid var(--line);color:var(--muted);
+    padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer
+  }
+  .catchips button.on{background:var(--panel2);color:var(--ink);border-color:var(--accent)}
+
+  /* grid */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  @media(max-width:420px){.grid{grid-template-columns:1fr 1fr}}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;cursor:pointer;display:flex;flex-direction:column;position:relative
+  }
+  .card .ph{aspect-ratio:4/3;background:#0b0d12;display:flex;align-items:center;justify-content:center;color:#3a4150;font-size:12px;overflow:hidden}
+  .card .ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .card .body{padding:9px 10px 11px}
+  .card .t{font-size:14px;font-weight:700;line-height:1.25;margin:0 0 4px;max-height:2.5em;overflow:hidden}
+  .card .p{color:var(--accent2);font-weight:800;font-size:16px}
+  .card .meta{color:var(--muted);font-size:11px;margin-top:3px}
+  .badge{position:absolute;top:8px;left:8px;font-size:10px;font-weight:800;padding:3px 7px;border-radius:6px;letter-spacing:.4px}
+  .badge.sold{background:var(--sold);color:#2a0006}
+  .badge.feat{background:var(--accent2);color:#241700;left:auto;right:8px}
+  .empty{color:var(--muted);text-align:center;padding:40px 10px}
+
+  /* sheet / modal */
+  .sheet{position:fixed;inset:0;z-index:50;display:none}
+  .sheet.open{display:block}
+  .sheet .scrim{position:absolute;inset:0;background:#000a}
+  .sheet .panel{
+    position:absolute;left:0;right:0;bottom:0;max-height:92vh;overflow:auto;
+    background:var(--panel);border-top-left-radius:18px;border-top-right-radius:18px;
+    max-width:var(--maxw);margin:0 auto;border:1px solid var(--line)
+  }
+  .sheet .panel .inner{padding:16px}
+  .sheet .grabber{width:40px;height:4px;background:#3a4150;border-radius:3px;margin:8px auto}
+  .gallery{display:flex;gap:8px;overflow:auto;margin:6px 0 12px}
+  .gallery img{height:210px;border-radius:12px;border:1px solid var(--line)}
+  .gallery .noimg{height:170px;width:100%;background:#0b0d12;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#3a4150}
+  .price-lg{font-size:26px;font-weight:900;color:var(--accent2)}
+  .kv{display:flex;gap:8px;font-size:14px;margin:6px 0;color:var(--muted)}
+  .kv b{color:var(--ink);font-weight:700}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--accent);color:#1a1200;border:none;border-radius:12px;
+    padding:13px 16px;font-weight:800;cursor:pointer;text-decoration:none;font-size:15px
+  }
+  .btn.sec{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
+  .btn.wide{width:100%}
+  .btn.sm{padding:8px 12px;font-size:13px;border-radius:9px}
+  .btnrow{display:flex;gap:10px;margin-top:14px}
+  .close{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted);font-size:26px;cursor:pointer;line-height:1}
+
+  /* bot */
+  .bot-wrap{display:flex;flex-direction:column;gap:12px}
+  .botlog{display:flex;flex-direction:column;gap:12px;min-height:120px}
+  .bubble{max-width:88%;padding:10px 13px;border-radius:14px;font-size:15px;white-space:pre-wrap}
+  .bubble.me{align-self:flex-end;background:var(--accent);color:#1a1200;border-bottom-right-radius:4px}
+  .bubble.bot{align-self:flex-start;background:var(--panel2);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .results{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .resrow{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer}
+  .resrow .rt{flex:1;min-width:0}
+  .resrow .rt .n{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .resrow .rt .m{color:var(--muted);font-size:12px}
+  .resrow .rp{font-weight:800;color:var(--accent2)}
+  .resrow .sold{color:var(--sold);font-size:11px;font-weight:800}
+  .chips{display:flex;gap:8px;overflow:auto;padding-bottom:2px}
+  .chips button{flex:0 0 auto;background:var(--chip);border:1px solid var(--line);color:var(--ink);padding:7px 12px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer}
+  .askbar{display:flex;gap:8px;position:sticky;bottom:0;background:var(--bg);padding:8px 0}
+
+  /* info panes */
+  .prose{color:var(--ink)}
+  .prose h2{font-size:18px;margin:18px 0 8px}
+  .prose p{color:#cfd6e0}
+  .prose ul{padding-left:18px;color:#cfd6e0}
+  .prose li{margin:6px 0}
+  .callout{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}
+
+  /* board */
+  .board-list{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+  .brow{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .brow .bt{flex:1;min-width:0}
+  .brow .bt .n{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .brow .bt .m{color:var(--muted);font-size:12px}
+  .form{display:flex;flex-direction:column;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
+  .form label{font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px}
+  .form .two{display:flex;gap:10px}
+  .form .two>div{flex:1}
+  .thumbs{display:flex;gap:8px;flex-wrap:wrap}
+  .thumbs .th{position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+  .thumbs .th img{width:100%;height:100%;object-fit:cover}
+  .thumbs .th button{position:absolute;top:0;right:0;background:#000a;color:#fff;border:none;width:20px;height:20px;cursor:pointer}
+  .muted{color:var(--muted);font-size:13px}
+  .hidden{display:none!important}
+  .note{font-size:12px;color:var(--muted);margin-top:4px}
+  footer.foot{max-width:var(--maxw);margin:24px auto 0;padding:14px;color:#5b636f;font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <div style="font-size:26px">🛻</div>
+    <div>
+      <h1>EVERYTHING'S <span class="fs">FOR SALE</span></h1>
+      <div class="tag" id="tagline">Southern Illinois · Built, fixed, flipped</div>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="shop" class="active">Shop</button>
+    <button data-tab="bot">Truck-Bot</button>
+    <button data-tab="sell">Sell / Trade</button>
+    <button data-tab="tips">Tips</button>
+    <button data-tab="board">Board</button>
+  </nav>
+</header>
+
+<div class="wrap">
+  <!-- SHOP -->
+  <section class="tabpane active" id="pane-shop">
+    <div class="controls">
+      <div class="search">
+        <input class="text" id="search" type="search" placeholder="Search the yard — toolbox, wheels, throttle body…" autocomplete="off">
+      </div>
+      <div class="row">
+        <select id="sort" style="max-width:190px">
+          <option value="new">Newest first</option>
+          <option value="low">Price: low → high</option>
+          <option value="high">Price: high → low</option>
+        </select>
+      </div>
+      <div class="catchips" id="catchips"></div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="empty hidden" id="shop-empty">Nothing matches that. Try the Truck-Bot tab.</div>
+  </section>
+
+  <!-- BOT -->
+  <section class="tabpane" id="pane-bot">
+    <div class="bot-wrap">
+      <div class="chips" id="botchips"></div>
+      <div class="botlog" id="botlog"></div>
+      <div class="askbar">
+        <input class="text" id="botinput" placeholder="Ask the Truck-Bot… (e.g. any wheels under $200?)" autocomplete="off">
+        <button class="btn" id="botsend">Ask</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SELL -->
+  <section class="tabpane" id="pane-sell">
+    <div class="prose">
+      <h2>Got something to move?</h2>
+      <p>Tools, truck parts, wheels, scrap that's worth more than scrap — I buy, trade, and take stuff on to flip. Text a photo and a price and I'll tell you straight if it's a yes.</p>
+      <div class="callout">
+        <div style="font-weight:800;margin-bottom:8px">Fastest way: text me a photo</div>
+        <a class="btn wide" id="sell-text" href="#">Text a photo</a>
+        <div style="height:8px"></div>
+        <a class="btn sec wide" id="sell-mail" href="#">Email instead</a>
+      </div>
+      <h2>What I'm after</h2>
+      <ul>
+        <li>Truck & auto parts — running takeoffs, tonneau covers, wheels, lights</li>
+        <li>Hand tools & power tools that still work</li>
+        <li>Anything I can 3D print a replacement for (bring the broken one)</li>
+        <li>Odd hardware, brackets, decals — small stuff moves fast</li>
+      </ul>
+      <p class="muted">Trades welcome. Cash on pickup. No storefront — we set a spot when you text.</p>
+    </div>
+  </section>
+
+  <!-- TIPS -->
+  <section class="tabpane" id="pane-tips">
+    <div class="prose">
+      <h2>Buying here — how it works</h2>
+      <ul>
+        <li><b>Text about the item</b> — every listing has a button that texts me the tag number so I know exactly what you mean.</li>
+        <li><b>Scan the tag.</b> If you saw it on the truck or a flyer, the QR drops you straight on that listing.</li>
+        <li><b>Cash on pickup</b> is easiest. Venmo/CashApp fine for anything I ship.</li>
+        <li><b>Hold requests</b> — I'll sit on something for 24 hours with a text. After that it goes back up.</li>
+      </ul>
+      <h2>Pickup</h2>
+      <p>Southern Illinois. I'll set a spot when you text — usually a lot off the highway, evenings and weekends are easiest.</p>
+      <h2>Shipping</h2>
+      <p>Small stuff ships — printed parts, brackets, decals. Big or heavy is local pickup only.</p>
+      <div class="callout">
+        <div style="font-weight:800;margin-bottom:6px">Questions before you drive out?</div>
+        <div class="muted">Ask the <a href="?tab=bot">Truck-Bot</a> — it knows what's in stock right now, or text me.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOARD (admin) -->
+  <section class="tabpane" id="pane-board">
+    <div id="pin-gate">
+      <div class="prose"><h2>Board</h2><p class="muted">Owner area. Enter PIN to manage listings.</p></div>
+      <div class="form">
+        <div>
+          <label for="pin">PIN</label>
+          <input class="text" id="pin" type="password" inputmode="numeric" placeholder="••••">
+        </div>
+        <button class="btn" id="pin-go">Unlock</button>
+        <div class="note" id="pin-err" style="color:var(--sold)"></div>
+        <div class="note">The PIN keeps casual visitors out — it is <b>not</b> security. Don't put anything private in a listing.</div>
+      </div>
+    </div>
+
+    <div id="board" class="hidden">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div style="font-weight:800">Listings (<span id="board-count">0</span>)</div>
+        <button class="btn sm" id="new-listing">+ New listing</button>
+      </div>
+      <div class="board-list" id="board-list"></div>
+
+      <div class="form hidden" id="editor">
+        <div style="font-weight:800" id="editor-title">New listing</div>
+        <div class="two">
+          <div>
+            <label for="f-tag">Tag</label>
+            <input class="text" id="f-tag" placeholder="EFS-1010">
+          </div>
+          <div>
+            <label for="f-price">Price</label>
+            <input class="text" id="f-price" type="number" inputmode="decimal" placeholder="120">
+          </div>
+        </div>
+        <div>
+          <label for="f-title">Title</label>
+          <input class="text" id="f-title" placeholder="Craftsman rolling toolbox">
+        </div>
+        <div class="two">
+          <div>
+            <label for="f-cat">Category</label>
+            <input class="text" id="f-cat" list="catlist" placeholder="Tools">
+            <datalist id="catlist"></datalist>
+          </div>
+          <div>
+            <label for="f-cond">Condition</label>
+            <input class="text" id="f-cond" placeholder="Good, works">
+          </div>
+        </div>
+        <div>
+          <label for="f-pickup">Pickup</label>
+          <input class="text" id="f-pickup" placeholder="Marion, IL">
+        </div>
+        <div>
+          <label for="f-desc">Description</label>
+          <textarea id="f-desc" rows="3" placeholder="Honest notes — what works, what doesn't."></textarea>
+        </div>
+        <div class="row">
+          <label style="display:flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" id="f-sold"> Sold</label>
+          <label style="display:flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" id="f-feat"> Featured</label>
+        </div>
+        <div>
+          <label>Photos <span class="muted">(auto-resized to 1000px wide)</span></label>
+          <div class="thumbs" id="f-thumbs"></div>
+          <div style="height:8px"></div>
+          <input type="file" id="f-photo" accept="image/*" capture="environment" multiple>
+        </div>
+        <div class="btnrow">
+          <button class="btn" id="save-listing">Save listing</button>
+          <button class="btn sec" id="cancel-edit">Cancel</button>
+        </div>
+      </div>
+
+      <div class="prose"><h2>Publish</h2></div>
+      <div class="form">
+        <div class="muted">Changes live only on this device until you build a new file and upload it to Netlify. <b>Build first, then close the tab.</b></div>
+        <button class="btn" id="build">⬇ Build new index.html</button>
+        <div class="row">
+          <button class="btn sec sm" id="save-json">Save listings.json</button>
+          <label class="btn sec sm" for="load-json" style="cursor:pointer">Load listings.json</label>
+          <input id="load-json" type="file" accept="application/json,.json" class="hidden">
+          <button class="btn sec sm" id="save-csv">Export CSV</button>
+        </div>
+        <button class="btn sec sm" id="revert" style="align-self:flex-start">Discard local changes</button>
+        <div class="note" id="build-note"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div id="foot-phone"></div>
+    <div>EVERYTHING'S FOR SALE — one page, no database. Built, fixed, flipped.</div>
+  </footer>
+</div>
+
+<!-- item sheet -->
+<div class="sheet" id="sheet">
+  <div class="scrim" data-close></div>
+  <div class="panel">
+    <div class="grabber"></div>
+    <button class="close" data-close>×</button>
+    <div class="inner" id="sheet-inner"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   EVERYTHING'S FOR SALE — single-file marketplace + Truck-Bot
+   No build step, no server, no database. This file is the site.
+   ============================================================ */
+(function(){
+"use strict";
+
+/*CONFIG_START*/
+const CONFIG = {
+  phone: "618-555-0142",                 // <-- your real number
+  email: "TrailTradeSupplies@protonmail.com",
+  tagline: "Southern Illinois · Built, fixed, flipped",
+  adminPin: "1989",                      // <-- CHANGE THIS
+  goatcounter: "",                       // <-- your GoatCounter code, e.g. "everythingsforsale"
+  currency: "$"
+};
+/*CONFIG_END*/
+
+/*BOTKB_START*/
+// Policy answers. Each entry: keywords + the reply. Add entries as questions repeat.
+// You never need to touch this for products — the bot indexes listings on its own.
+const BOT_KB = [
+  { k:["ship","shipping","mail","deliver","delivery"],
+    a:"Small stuff ships — printed parts, brackets, decals go out USPS. Big or heavy is local pickup only." },
+  { k:["hold","reserve","save it","set aside"],
+    a:"I'll hold something for 24 hours with a text. After that it goes back up for grabs." },
+  { k:["trade","trades","swap","trade in"],
+    a:"Yeah, I take trades — mostly on truck parts and tools. Text me what you've got." },
+  { k:["cash","pay","payment","venmo","cashapp","paypal"],
+    a:"Cash on pickup is easiest. Venmo/CashApp are fine for anything I ship." },
+  { k:["where","located","location","pickup","pick up","meet"],
+    a:"Pickup's around Southern Illinois — I'll set a spot when you text, usually a lot off the highway." },
+  { k:["hours","open","when can","what time"],
+    a:"No storefront — text and we'll set a time. Evenings and weekends are easiest." },
+  { k:["warranty","guarantee","return","refund"],
+    a:"Used goods sell as-is, but everything's described honest. Ask whatever you want before you buy." },
+  { k:["negotiate","best price","lower","discount","haggle","obo"],
+    a:"Prices have a little room, especially on bundles. Make me a fair offer by text." }
+];
+/*BOTKB_END*/
+
+/*LISTINGS_START*/
+const SEED_LISTINGS = [
+  { tag:"EFS-1001", title:"Craftsman rolling toolbox", price:220, category:"Tools", condition:"Good, all drawers roll", pickup:"Marion, IL", description:"5-drawer rolling chest, keys included. Solid steel, minor shelf wear. No rust.", photos:[], sold:false, featured:true, createdAt:1707000000000 },
+  { tag:"EFS-1002", title:'Set of 4 17" alloy wheels', price:300, category:"Wheels", condition:"Good, no bends", pickup:"Marion, IL", description:"17x8 alloys off a half-ton, no curb rash to speak of. Tires are usable but not new.", photos:[], sold:false, featured:false, createdAt:1707100000000 },
+  { tag:"EFS-1003", title:"Ford 5.4L throttle body", price:85, category:"Truck Parts", condition:"Used, tested good", pickup:"Carbondale, IL", description:"Pulled from a running truck, cleaned and bench-tested. Fits 5.4 Triton.", photos:[], sold:false, featured:false, createdAt:1707200000000 },
+  { tag:"EFS-1004", title:"3D printed dash phone mount", price:18, category:"3D Printed", condition:"New", pickup:"Ships or pickup", description:"PETG, magnetic, vent-clip. Sized for most trucks. Prints on demand in any color.", photos:[], sold:false, featured:true, createdAt:1707300000000 },
+  { tag:"EFS-1005", title:"Tonneau cover, 6.5ft bed", price:140, category:"Truck Parts", condition:"Good", pickup:"Marion, IL", description:"Roll-up soft cover, all clamps present. Fits 6.5ft beds. A couple scuffs, seals fine.", photos:[], sold:false, featured:false, createdAt:1707400000000 },
+  { tag:"EFS-1006", title:"Corded impact wrench", price:45, category:"Tools", condition:"Works", pickup:"Carbondale, IL", description:"1/2\" corded impact, hits hard. Cord and case included.", photos:[], sold:false, featured:false, createdAt:1707500000000 },
+  { tag:"EFS-1007", title:"Custom vinyl decal set", price:12, category:"Decals", condition:"New", pickup:"Ships or pickup", description:"Cut-to-order vinyl. Send me your text or logo, pick a color. Weatherproof.", photos:[], sold:false, featured:false, createdAt:1707600000000 },
+  { tag:"EFS-1008", title:"Pair of fog lights", price:60, category:"Truck Parts", condition:"Good", pickup:"Marion, IL", description:"OEM-style fog lights with harness. Both work, lenses clear.", photos:[], sold:true, featured:false, createdAt:1707700000000 },
+  { tag:"EFS-1009", title:"3D printed cup holder insert", price:9, category:"3D Printed", condition:"New", pickup:"Ships or pickup", description:"Adapter insert to shrink an oversized cup holder. Prints to fit — tell me the diameter.", photos:[], sold:false, featured:false, createdAt:1707800000000 }
+];
+/*LISTINGS_END*/
+
+/* ---------- tiny helpers ---------- */
+const $  = (s,r)=> (r||document).querySelector(s);
+const $$ = (s,r)=> Array.prototype.slice.call((r||document).querySelectorAll(s));
+const clone = o => JSON.parse(JSON.stringify(o));
+
+function escapeHTML(s){
+  return String(s==null?"":s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function formatPrice(n){
+  const num = Number(n)||0;
+  return CONFIG.currency + (Number.isInteger(num) ? num : num.toFixed(2));
+}
+function phoneDigits(){ return String(CONFIG.phone).replace(/[^0-9+]/g,""); }
+
+/* durable-ish localStorage with in-memory fallback (file://, private mode, jsdom) */
+const _mem = {};
+const store = {
+  get(k){ try{ return window.localStorage.getItem(k); }catch(e){ return k in _mem ? _mem[k] : null; } },
+  set(k,v){ try{ window.localStorage.setItem(k,v); }catch(e){ _mem[k]=v; } },
+  del(k){ try{ window.localStorage.removeItem(k); }catch(e){ delete _mem[k]; } }
+};
+
+const LS_KEY = "efs_listings_v1";
+
+/* ---------- state ---------- */
+function loadListings(){
+  let saved=null;
+  try{ saved = JSON.parse(store.get(LS_KEY)||"null"); }catch(e){ saved=null; }
+  const base = (Array.isArray(saved) && saved.length) ? saved : clone(SEED_LISTINGS);
+  return base.map(normalizeListing);
+}
+function normalizeListing(l){
+  return {
+    tag: String(l.tag||"").toUpperCase(),
+    title: String(l.title||""),
+    price: Number(l.price)||0,
+    category: String(l.category||"Misc"),
+    condition: String(l.condition||""),
+    pickup: String(l.pickup||""),
+    description: String(l.description||""),
+    photos: Array.isArray(l.photos)?l.photos.slice(0,6):[],
+    sold: !!l.sold,
+    featured: !!l.featured,
+    createdAt: Number(l.createdAt)||Date.now()
+  };
+}
+const state = { listings: loadListings(), tab:"shop", category:"All", q:"", sort:"new", admin:false, openItem:null, editingTag:null, draftPhotos:[] };
+
+function persist(){ store.set(LS_KEY, JSON.stringify(state.listings)); }
+
+/* ---------- listing queries ---------- */
+function byTag(tag){
+  if(!tag) return null;
+  const t = String(tag).toUpperCase();
+  return state.listings.find(l=>l.tag===t) || null;
+}
+function liveListings(){ return state.listings.filter(l=>!l.sold); }
+function categories(list){
+  const seen=[]; (list||liveListings()).forEach(l=>{ if(l.category && seen.indexOf(l.category)<0) seen.push(l.category); });
+  return seen;
+}
+function filterAndSort(opts){
+  opts = opts||{};
+  const q = (opts.q!=null?opts.q:state.q||"").trim().toLowerCase();
+  const cat = opts.category!=null?opts.category:state.category;
+  const sort = opts.sort!=null?opts.sort:state.sort;
+  let out = state.listings.slice();
+  if(cat && cat!=="All") out = out.filter(l=>l.category===cat);
+  if(q){
+    out = out.filter(l=> (l.title+" "+l.category+" "+l.description+" "+l.condition+" "+l.tag).toLowerCase().indexOf(q)>=0 );
+  }
+  if(sort==="low") out.sort((a,b)=>a.price-b.price);
+  else if(sort==="high") out.sort((a,b)=>b.price-a.price);
+  else out.sort((a,b)=>b.createdAt-a.createdAt);
+  return out;
+}
+function nextTag(){
+  let max=1000;
+  state.listings.forEach(l=>{ const m=/(\d+)\s*$/.exec(l.tag||""); if(m){ max=Math.max(max, parseInt(m[1],10)); } });
+  return "EFS-"+(max+1);
+}
+
+/* ---------- links ---------- */
+function baseURL(){ return location.origin + location.pathname; }
+function shareLink(tag){ return baseURL()+"?item="+encodeURIComponent(tag); }
+function smsLink(tag){
+  const l = byTag(tag);
+  const label = l ? (l.title+" ("+tag+")") : ("item "+tag);
+  const body = "Hey — is the "+label+" still available?";
+  return "sms:"+phoneDigits()+"?&body="+encodeURIComponent(body);
+}
+function mailtoLink(tag){
+  const l = byTag(tag);
+  const label = l ? (l.title+" ("+tag+")") : ("item "+tag);
+  return "mailto:"+CONFIG.email+"?subject="+encodeURIComponent("EFS — "+label)+
+         "&body="+encodeURIComponent("Hi — I'm interested in the "+label+". Is it still available?");
+}
+
+/* ---------- export / rebuild ---------- */
+function listingsToJSON(){ return JSON.stringify(state.listings, null, 2); }
+function csvCell(v){ return '"'+String(v==null?"":v).replace(/"/g,'""')+'"'; }
+function listingsToCSV(list){
+  list = list || state.listings;
+  const cols = ["tag","title","price","category","condition","pickup","sold","featured"];
+  const rows = [cols.join(",")];
+  list.forEach(l=> rows.push(cols.map(c=>csvCell(l[c])).join(",")) );
+  return rows.join("\n");
+}
+/* Splice the current listings into a copy of the page source. Pure + testable. */
+function buildSource(src, list){
+  list = list || state.listings;
+  const json = JSON.stringify(list, null, 2).replace(/</g,"\\u003c");
+  const block = "/*LISTINGS_START*/\nconst SEED_LISTINGS = "+json+";\n/*LISTINGS_END*/";
+  return src.replace(/\/\*LISTINGS_START\*\/[\s\S]*?\/\*LISTINGS_END\*\//, function(){ return block; });
+}
+function download(name, text, type){
+  try{
+    const blob = new Blob([text], {type: type||"text/plain"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0);
+  }catch(e){ /* non-browser */ }
+}
+async function buildIndex(){
+  const note = $("#build-note");
+  try{
+    const res = await fetch(location.pathname.split("?")[0] || "index.html", {cache:"no-store"});
+    if(!res.ok) throw new Error("fetch failed");
+    const src = await res.text();
+    if(src.indexOf("/*LISTINGS_START*/")<0) throw new Error("marker missing");
+    download("index.html", buildSource(src, state.listings), "text/html");
+    if(note) note.textContent = "Built index.html with "+state.listings.length+" listings. Upload it to Netlify.";
+  }catch(e){
+    if(note) note.textContent = "Can't read own source here (needs to be hosted). Saved listings.json instead.";
+    download("listings.json", listingsToJSON(), "application/json");
+  }
+}
+
+/* ---------- photo resize (camera) ---------- */
+function resizeDataURL(fileOrDataURL, maxW){
+  maxW = maxW||1000;
+  return new Promise(function(resolve,reject){
+    const img = new Image();
+    img.onload = function(){
+      try{
+        const scale = Math.min(1, maxW/img.width);
+        const w = Math.round(img.width*scale), h = Math.round(img.height*scale);
+        const c = document.createElement("canvas");
+        c.width=w; c.height=h;
+        const ctx = c.getContext("2d");
+        if(!ctx){ resolve(typeof fileOrDataURL==="string"?fileOrDataURL:""); return; }
+        ctx.drawImage(img,0,0,w,h);
+        resolve(c.toDataURL("image/jpeg",0.82));
+      }catch(e){ reject(e); }
+    };
+    img.onerror = reject;
+    if(typeof fileOrDataURL==="string"){ img.src=fileOrDataURL; }
+    else{
+      const fr = new FileReader();
+      fr.onload = function(){ img.src = fr.result; };
+      fr.onerror = reject;
+      fr.readAsDataURL(fileOrDataURL);
+    }
+  });
+}
+
+/* ============================================================
+   TRUCK-BOT — offline, indexes listings automatically.
+   Decision order:
+   tag > price filter > superlative > recommend > sold-list >
+   category browse > catalog > strong policy > product search >
+   weak policy > phone number.
+   ============================================================ */
+const STOP = {a:1,an:1,the:1,you:1,your:1,got:1,get:1,any:1,is:1,are:1,was:1,how:1,much:1,
+  do:1,does:1,have:1,has:1,for:1,me:1,i:1,we:1,want:1,need:1,to:1,of:1,it:1,that:1,this:1,
+  there:1,some:1,got:1,still:1,available:1,about:1,show:1,me:1,got:1,thing:1,things:1,stuff:1,
+  can:1,will:1,would:1,please:1,hey:1,hi:1,yo:1,and:1,or:1,with:1,on:1,in:1,at:1,my:1};
+
+function tokens(s){
+  return String(s||"").toLowerCase().replace(/[^a-z0-9$ ]/g," ").split(/\s+/)
+    .filter(t=>t && t.length>=2 && !STOP[t]);
+}
+// Kept deliberately conservative: only words distinctive enough to mean "browse
+// this category", not product terms like "wrench" or "fog light" that should reach search.
+const CAT_SYNONYMS = {
+  "Wheels":["wheel","wheels","rim","rims"],
+  "Tools":["tool","tools"],
+  "Truck Parts":["truck part","truck parts","auto part","auto parts"],
+  "3D Printed":["3d","3d printed","printed","3d print"],
+  "Decals":["decal","decals","sticker","stickers","vinyl"]
+};
+function matchCategory(q){
+  const cats = categories(state.listings);
+  // explicit full category name
+  for(let i=0;i<cats.length;i++){
+    const c = cats[i];
+    const rx = new RegExp("\\b"+c.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b");
+    if(rx.test(q)) return c;
+  }
+  // synonyms (only for categories that actually exist in inventory)
+  for(const c in CAT_SYNONYMS){
+    if(cats.indexOf(c)<0) continue;
+    const syns = CAT_SYNONYMS[c];
+    for(let j=0;j<syns.length;j++){
+      const rx = new RegExp("\\b"+syns[j].replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b");
+      if(rx.test(q)) return c;
+    }
+  }
+  return null;
+}
+function parsePriceQuery(q){
+  let m;
+  if((m=/\b(?:between\s+)?\$?(\d+(?:\.\d+)?)\s*(?:and|-|to|through|thru)\s*\$?(\d+(?:\.\d+)?)\b/.exec(q))){
+    const a=parseFloat(m[1]), b=parseFloat(m[2]);
+    return {min:Math.min(a,b), max:Math.max(a,b), kind:"between"};
+  }
+  if((m=/\b(?:under|below|less than|cheaper than|up to|max|no more than)\s+\$?(\d+(?:\.\d+)?)/.exec(q))){
+    return {max:parseFloat(m[1]), kind:"under"};
+  }
+  if((m=/\b(?:over|above|more than|at least|min|starting at)\s+\$?(\d+(?:\.\d+)?)/.exec(q))){
+    return {min:parseFloat(m[1]), kind:"over"};
+  }
+  return null;
+}
+const STRONG_POLICY = ["ship","shipping","mail","deliver","delivery","hold","reserve","trade",
+  "trades","swap","cash","venmo","cashapp","paypal","located","location","pickup","warranty",
+  "guarantee","return","refund","hours","negotiate","haggle","discount","obo"];
+
+function policyMatch(q){
+  let best=null, bestScore=0, strong=false;
+  BOT_KB.forEach(entry=>{
+    let score=0, thisStrong=false;
+    entry.k.forEach(kw=>{
+      const rx = new RegExp("\\b"+kw.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b");
+      if(rx.test(q)){ score++; if(STRONG_POLICY.indexOf(kw)>=0) thisStrong=true; }
+    });
+    if(score>bestScore){ bestScore=score; best=entry; strong=thisStrong; }
+  });
+  if(!best) return null;
+  return { entry:best, strong:strong };
+}
+function productSearch(q){
+  const toks = tokens(q);
+  if(!toks.length) return [];
+  const scored = state.listings.map(l=>{
+    const hay = (l.title+" "+l.category+" "+l.description+" "+l.condition).toLowerCase();
+    let s=0; toks.forEach(t=>{ if(hay.indexOf(t)>=0) s++; });
+    return {l:l, s:s};
+  }).filter(x=>x.s>0);
+  scored.sort((a,b)=> b.s-a.s || b.l.createdAt-a.l.createdAt );
+  return scored.map(x=>x.l);
+}
+function catBreakdown(list){
+  const map={}; list.forEach(l=>{ map[l.category]=(map[l.category]||0)+1; });
+  return Object.keys(map).map(k=>k+" ("+map[k]+")").join(", ");
+}
+function priceRange(list){
+  if(!list.length) return "";
+  let lo=Infinity,hi=-Infinity; list.forEach(l=>{ lo=Math.min(lo,l.price); hi=Math.max(hi,l.price); });
+  return formatPrice(lo)+"–"+formatPrice(hi);
+}
+
+/* Main bot entry. Returns {text, results, kind}. */
+function bot(query){
+  const raw = String(query||"").trim();
+  const q = raw.toLowerCase();
+  const live = liveListings();
+  const phone = CONFIG.phone;
+
+  if(!raw){
+    return { kind:"empty", results:[], text:"Ask me anything — what you're after, a price range, or a tag number. Or text "+phone+"." };
+  }
+
+  // 1) tag lookup
+  const tagM = /\befs[\s-]?(\d{3,})\b/i.exec(raw);
+  if(tagM){
+    const l = byTag("EFS-"+tagM[1]);
+    if(l){
+      if(l.sold){
+        const subs = live.filter(x=>x.category===l.category).slice(0,3);
+        return { kind:"sold", results:[l].concat(subs),
+          text:l.title+" ("+l.tag+") is sold — sorry. "+(subs.length?"Closest I've still got:":"Text "+phone+" and I'll keep an eye out.") };
+      }
+      return { kind:"tag", results:[l],
+        text:"That's "+l.title+" — "+formatPrice(l.price)+", "+l.condition+". Pickup: "+l.pickup+"." };
+    }
+    return { kind:"tag-miss", results:[], text:"No listing under that tag right now. Text "+phone+" and I'll check." };
+  }
+
+  // 2) price filter (optionally + category)
+  const pr = parsePriceQuery(q);
+  if(pr){
+    const cat = matchCategory(q);
+    let pool = live.slice();
+    if(cat) pool = pool.filter(l=>l.category===cat);
+    if(pr.max!=null) pool = pool.filter(l=>l.price<=pr.max);
+    if(pr.min!=null) pool = pool.filter(l=>l.price>=pr.min);
+    pool.sort((a,b)=>a.price-b.price);
+    let label;
+    if(pr.kind==="between") label="between "+formatPrice(pr.min)+" and "+formatPrice(pr.max);
+    else if(pr.kind==="under") label="under "+formatPrice(pr.max);
+    else label="over "+formatPrice(pr.min);
+    if(cat) label += " in "+cat;
+    if(!pool.length) return { kind:"price", results:[], text:"Nothing "+label+" right now. Text "+phone+" and I'll watch for it." };
+    return { kind:"price", results:pool, text:"Here's what I've got "+label+", cheapest first:" };
+  }
+
+  // 3) sold list (checked before "newest" so "what sold recently" isn't hijacked by "recently")
+  if(/\b(sold|gone)\b/.test(q)){
+    const pool = state.listings.filter(l=>l.sold);
+    if(!pool.length) return { kind:"sold-list", results:[], text:"Nothing's sold out from under you yet — it's all still here." };
+    return { kind:"sold-list", results:pool, text:"Recently sold:" };
+  }
+
+  // 4) superlatives
+  if(/\b(cheap|cheapest|lowest|least expensive|budget)\b/.test(q)){
+    const pool = live.slice().sort((a,b)=>a.price-b.price).slice(0,3);
+    return { kind:"cheapest", results:pool, text:"Cheapest I've got right now:" };
+  }
+  if(/\b(most expensive|priciest|expensive|highest|biggest|top dollar|nicest)\b/.test(q)){
+    const pool = live.slice().sort((a,b)=>b.price-a.price).slice(0,3);
+    return { kind:"expensive", results:pool, text:"Biggest-ticket items:" };
+  }
+  if(/\b(new|newest|recent|recently|latest|just (?:got|added|in)|anything new)\b/.test(q)){
+    const pool = live.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,3);
+    return { kind:"newest", results:pool, text:"Freshest additions:" };
+  }
+
+  // 5) recommend / featured
+  if(/\b(recommend|suggest|featured|deal|deals|best|should i|worth)\b/.test(q)){
+    let pool = live.filter(l=>l.featured);
+    if(!pool.length) pool = live.slice().sort((a,b)=>a.price-b.price).slice(0,3);
+    return { kind:"recommend", results:pool, text:"Stuff I'd point you at first:" };
+  }
+
+  // 6) catalog summary
+  if(/\b(what do you have|what have you|what.?s in stock|inventory|everything|catalog|what do you sell|selling|what.?s available|list everything|full list)\b/.test(q)){
+    return { kind:"catalog", results:live.slice().sort((a,b)=>b.createdAt-a.createdAt),
+      text:live.length+" items up right now — "+catBreakdown(live)+". Prices run "+priceRange(live)+". Tap any to see it." };
+  }
+
+  // 7) category browse
+  const cat = matchCategory(q);
+  if(cat){
+    const pool = live.filter(l=>l.category===cat).sort((a,b)=>b.createdAt-a.createdAt);
+    if(pool.length) return { kind:"category", results:pool, text:"In "+cat+" I've got:" };
+  }
+
+  // 8) strong policy
+  const pol = policyMatch(q);
+  if(pol && pol.strong){
+    const stock = live.slice().sort((a,b)=> (b.featured-a.featured) || (a.price-b.price)).slice(0,3);
+    return { kind:"policy", results:stock, text:pol.entry.a };
+  }
+
+  // 9) product search
+  const prod = productSearch(q);
+  if(prod.length){
+    const liveMatches = prod.filter(l=>!l.sold);
+    if(!liveMatches.length){
+      // matched only sold items -> offer substitutes
+      const soldOne = prod[0];
+      const subs = live.filter(l=>l.category===soldOne.category).slice(0,3);
+      return { kind:"sold", results:[soldOne].concat(subs),
+        text:"The "+soldOne.title+" sold, sorry. "+(subs.length?"Closest I still have:":"Text "+phone+" and I'll watch for another.") };
+    }
+    if(liveMatches.length===1){
+      const l=liveMatches[0];
+      return { kind:"product", results:liveMatches,
+        text:"Yep — "+l.title+" is "+formatPrice(l.price)+", "+l.condition+". Pickup "+l.pickup+"." };
+    }
+    return { kind:"product", results:liveMatches, text:"Here's what matches:" };
+  }
+
+  // 10) weak policy
+  if(pol){
+    const stock = live.slice(0,3);
+    return { kind:"policy-weak", results:stock, text:pol.entry.a };
+  }
+
+  // 11) fallback -> phone
+  return { kind:"fallback", results:[], text:"Not sure I've got that one — text "+phone+" and I'll tell you straight." };
+}
+
+function chipsFromInventory(){
+  const cats = categories(liveListings());
+  const base = ["What do you have?","Cheapest thing you got","Under $100","What do you recommend?"];
+  return base.concat(cats.map(c=>"Show me "+c));
+}
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+function cardHTML(l){
+  const img = l.photos && l.photos[0]
+    ? '<img src="'+escapeHTML(l.photos[0])+'" alt="'+escapeHTML(l.title)+'">'
+    : 'no photo yet';
+  return '<div class="card" data-item="'+escapeHTML(l.tag)+'">'
+    + (l.sold?'<span class="badge sold">SOLD</span>':'')
+    + (l.featured&&!l.sold?'<span class="badge feat">★ PICK</span>':'')
+    + '<div class="ph">'+img+'</div>'
+    + '<div class="body">'
+      + '<div class="t">'+escapeHTML(l.title)+'</div>'
+      + '<div class="p">'+escapeHTML(formatPrice(l.price))+'</div>'
+      + '<div class="meta">'+escapeHTML(l.category)+' · '+escapeHTML(l.condition||"")+'</div>'
+    + '</div></div>';
+}
+function renderShop(){
+  const list = filterAndSort();
+  const grid = $("#grid"); if(!grid) return;
+  grid.innerHTML = list.map(cardHTML).join("");
+  const empty = $("#shop-empty");
+  if(empty) empty.classList.toggle("hidden", list.length>0);
+  renderCatChips();
+}
+function renderCatChips(){
+  const box = $("#catchips"); if(!box) return;
+  const cats = ["All"].concat(categories(state.listings));
+  box.innerHTML = cats.map(c=>'<button data-cat="'+escapeHTML(c)+'" class="'+(c===state.category?"on":"")+'">'+escapeHTML(c)+'</button>').join("");
+}
+function resRowHTML(l){
+  return '<div class="resrow" data-item="'+escapeHTML(l.tag)+'">'
+    + '<div class="rt"><div class="n">'+escapeHTML(l.title)+'</div>'
+    + '<div class="m">'+escapeHTML(l.category)+' · '+escapeHTML(l.tag)+(l.sold?' · <span class="sold">SOLD</span>':'')+'</div></div>'
+    + '<div class="rp">'+escapeHTML(formatPrice(l.price))+'</div></div>';
+}
+function botSay(text, results){
+  const log = $("#botlog"); if(!log) return;
+  let html = '<div class="bubble bot">'+escapeHTML(text);
+  if(results && results.length){
+    html += '<div class="results">'+results.map(resRowHTML).join("")+'</div>';
+  }
+  html += '</div>';
+  log.insertAdjacentHTML("beforeend", html);
+  log.scrollTop = log.scrollHeight;
+}
+function botAsk(q){
+  const log=$("#botlog");
+  if(log) log.insertAdjacentHTML("beforeend",'<div class="bubble me">'+escapeHTML(q)+'</div>');
+  const r = bot(q);
+  botSay(r.text, r.results);
+  return r;
+}
+function renderBotChips(){
+  const box=$("#botchips"); if(!box) return;
+  box.innerHTML = chipsFromInventory().map(c=>'<button>'+escapeHTML(c)+'</button>').join("");
+}
+
+/* item sheet */
+function openItem(tag){
+  const l = byTag(tag);
+  state.openItem = l ? l.tag : null;
+  const sheet=$("#sheet"), inner=$("#sheet-inner");
+  if(!l){ if(sheet) sheet.classList.remove("open"); return; }
+  if(inner){
+    const gal = l.photos && l.photos.length
+      ? '<div class="gallery">'+l.photos.map(p=>'<img src="'+escapeHTML(p)+'" alt="'+escapeHTML(l.title)+'">').join("")+'</div>'
+      : '<div class="gallery"><div class="noimg">no photo yet — text for pics</div></div>';
+    inner.innerHTML =
+      gal
+      + (l.sold?'<div class="badge sold" style="position:static;display:inline-block;margin-bottom:6px">SOLD</div>':'')
+      + '<div class="price-lg">'+escapeHTML(formatPrice(l.price))+'</div>'
+      + '<h2 style="margin:6px 0 2px">'+escapeHTML(l.title)+'</h2>'
+      + '<div class="kv"><span>Tag <b>'+escapeHTML(l.tag)+'</b></span><span>·</span><span><b>'+escapeHTML(l.category)+'</b></span></div>'
+      + '<div class="kv">Condition: <b>'+escapeHTML(l.condition||"—")+'</b></div>'
+      + '<div class="kv">Pickup: <b>'+escapeHTML(l.pickup||"—")+'</b></div>'
+      + '<p style="color:#cfd6e0">'+escapeHTML(l.description||"")+'</p>'
+      + '<div class="btnrow">'
+        + '<a class="btn wide" href="'+escapeHTML(smsLink(l.tag))+'">'+(l.sold?"Text — got more?":"Text about this")+'</a>'
+      + '</div>'
+      + '<div class="btnrow">'
+        + '<button class="btn sec" data-share="'+escapeHTML(l.tag)+'">Share / QR link</button>'
+        + '<a class="btn sec" href="'+escapeHTML(mailtoLink(l.tag))+'">Email</a>'
+      + '</div>'
+      + '<div class="note" id="share-note"></div>';
+  }
+  if(sheet) sheet.classList.add("open");
+}
+function closeSheet(){ state.openItem=null; const s=$("#sheet"); if(s) s.classList.remove("open"); }
+
+/* ============================================================
+   BOARD (admin)
+   ============================================================ */
+function checkPin(pin){ return String(pin) === String(CONFIG.adminPin); }
+function renderBoard(){
+  const cnt=$("#board-count"); if(cnt) cnt.textContent=state.listings.length;
+  const list=$("#board-list");
+  if(list){
+    const sorted = state.listings.slice().sort((a,b)=>b.createdAt-a.createdAt);
+    list.innerHTML = sorted.map(l=>
+      '<div class="brow">'
+      + '<div class="bt"><div class="n">'+escapeHTML(l.title)+(l.sold?' · SOLD':'')+(l.featured?' · ★':'')+'</div>'
+      + '<div class="m">'+escapeHTML(l.tag)+' · '+escapeHTML(formatPrice(l.price))+' · '+escapeHTML(l.category)+'</div></div>'
+      + '<button class="btn sm sec" data-edit="'+escapeHTML(l.tag)+'">Edit</button>'
+      + '<button class="btn sm sec" data-sold="'+escapeHTML(l.tag)+'">'+(l.sold?"Unsold":"Sold")+'</button>'
+      + '<button class="btn sm sec" data-del="'+escapeHTML(l.tag)+'">✕</button>'
+      + '</div>'
+    ).join("");
+  }
+  const dl=$("#catlist");
+  if(dl) dl.innerHTML = categories(state.listings).map(c=>'<option value="'+escapeHTML(c)+'">').join("");
+}
+
+/* CRUD used by UI + tests */
+function addListing(data){
+  const l = normalizeListing(Object.assign({tag:nextTag(), createdAt:Date.now()}, data||{}));
+  if(!l.tag) l.tag = nextTag();
+  if(byTag(l.tag)) l.tag = nextTag();
+  state.listings.push(l);
+  persist(); refreshAll();
+  return l;
+}
+function updateListing(tag, patch){
+  const l = byTag(tag); if(!l) return null;
+  Object.assign(l, normalizeListing(Object.assign(clone(l), patch, {tag:l.tag, createdAt:l.createdAt})));
+  persist(); refreshAll();
+  return l;
+}
+function deleteListing(tag){
+  const t=String(tag).toUpperCase();
+  const before=state.listings.length;
+  state.listings = state.listings.filter(l=>l.tag!==t);
+  persist(); refreshAll();
+  return state.listings.length<before;
+}
+function toggleSold(tag){ const l=byTag(tag); if(!l) return null; l.sold=!l.sold; persist(); refreshAll(); return l; }
+function toggleFeatured(tag){ const l=byTag(tag); if(!l) return null; l.featured=!l.featured; persist(); refreshAll(); return l; }
+
+function openEditor(tag){
+  state.editingTag = tag || null;
+  const l = tag ? byTag(tag) : null;
+  state.draftPhotos = l ? (l.photos||[]).slice() : [];
+  const ed=$("#editor"); if(ed) ed.classList.remove("hidden");
+  const setV=(id,v)=>{ const e=$(id); if(e) e.value=v; };
+  const setC=(id,v)=>{ const e=$(id); if(e) e.checked=v; };
+  $("#editor-title") && ($("#editor-title").textContent = l?("Edit "+l.tag):"New listing");
+  setV("#f-tag", l?l.tag:nextTag());
+  setV("#f-price", l?l.price:"");
+  setV("#f-title", l?l.title:"");
+  setV("#f-cat", l?l.category:"");
+  setV("#f-cond", l?l.condition:"");
+  setV("#f-pickup", l?l.pickup:"");
+  setV("#f-desc", l?l.description:"");
+  setC("#f-sold", l?l.sold:false);
+  setC("#f-feat", l?l.featured:false);
+  renderDraftThumbs();
+}
+function renderDraftThumbs(){
+  const box=$("#f-thumbs"); if(!box) return;
+  box.innerHTML = state.draftPhotos.map((p,i)=>
+    '<div class="th"><img src="'+escapeHTML(p)+'"><button data-rmphoto="'+i+'">×</button></div>').join("");
+}
+function saveEditorForm(){
+  const val=id=>{ const e=$(id); return e?e.value:""; };
+  const chk=id=>{ const e=$(id); return e?e.checked:false; };
+  const data={
+    tag: (val("#f-tag")||nextTag()).toUpperCase(),
+    title: val("#f-title"),
+    price: parseFloat(val("#f-price"))||0,
+    category: val("#f-cat")||"Misc",
+    condition: val("#f-cond"),
+    pickup: val("#f-pickup"),
+    description: val("#f-desc"),
+    photos: state.draftPhotos.slice(),
+    sold: chk("#f-sold"),
+    featured: chk("#f-feat")
+  };
+  if(state.editingTag){ updateListing(state.editingTag, data); }
+  else{
+    if(byTag(data.tag)) { updateListing(data.tag, data); }
+    else { addListing(data); }
+  }
+  const ed=$("#editor"); if(ed) ed.classList.add("hidden");
+  state.editingTag=null; state.draftPhotos=[];
+}
+
+/* ============================================================
+   TABS + WIRING
+   ============================================================ */
+function selectTab(name){
+  const valid=["shop","bot","sell","tips","board"];
+  if(valid.indexOf(name)<0) name="shop";
+  state.tab=name;
+  $$(".tabs button").forEach(b=> b.classList.toggle("active", b.getAttribute("data-tab")===name));
+  $$(".tabpane").forEach(p=> p.classList.toggle("active", p.id==="pane-"+name));
+  if(name==="bot"){ renderBotChips(); }
+  if(name==="board"){ renderBoard(); }
+}
+function refreshAll(){
+  renderShop();
+  if(state.tab==="bot") renderBotChips();
+  if(state.tab==="board") renderBoard();
+}
+
+function applyConfig(){
+  const t=$("#tagline"); if(t) t.textContent=CONFIG.tagline;
+  const f=$("#foot-phone"); if(f) f.textContent=CONFIG.phone+" · "+CONFIG.email;
+  const st=$("#sell-text"); if(st) st.setAttribute("href","sms:"+phoneDigits()+"?&body="+encodeURIComponent("Got something to sell/trade — here's a pic:"));
+  const sm=$("#sell-mail"); if(sm) sm.setAttribute("href","mailto:"+CONFIG.email+"?subject="+encodeURIComponent("Something to sell/trade"));
+  if(CONFIG.goatcounter){
+    try{
+      const s=document.createElement("script");
+      s.setAttribute("data-goatcounter","https://"+CONFIG.goatcounter+".goatcounter.com/count");
+      s.async=true; s.src="//gc.zgo.at/count.js";
+      document.body.appendChild(s);
+    }catch(e){}
+  }
+}
+
+function wire(){
+  // tabs
+  const tabs=$("#tabs");
+  if(tabs) tabs.addEventListener("click", e=>{
+    const b=e.target.closest("button[data-tab]"); if(!b) return;
+    selectTab(b.getAttribute("data-tab"));
+    history.replaceState(null,"", b.getAttribute("data-tab")==="shop"?baseURL():"?tab="+b.getAttribute("data-tab"));
+  });
+
+  // shop controls
+  const search=$("#search");
+  if(search) search.addEventListener("input", e=>{ state.q=e.target.value; renderShop(); });
+  const sort=$("#sort");
+  if(sort) sort.addEventListener("change", e=>{ state.sort=e.target.value; renderShop(); });
+  const cc=$("#catchips");
+  if(cc) cc.addEventListener("click", e=>{
+    const b=e.target.closest("button[data-cat]"); if(!b) return;
+    state.category=b.getAttribute("data-cat"); renderShop();
+  });
+
+  // open item from any grid/result row
+  document.addEventListener("click", e=>{
+    const c=e.target.closest("[data-item]"); if(c){ openItem(c.getAttribute("data-item")); }
+  });
+  // sheet close + share
+  const sheet=$("#sheet");
+  if(sheet) sheet.addEventListener("click", e=>{
+    if(e.target.closest("[data-close]")) { closeSheet(); return; }
+    const sb=e.target.closest("[data-share]");
+    if(sb){
+      const url=shareLink(sb.getAttribute("data-share"));
+      const note=$("#share-note");
+      const done=()=>{ if(note) note.textContent="Link copied: "+url; };
+      try{ navigator.clipboard.writeText(url).then(done, done); }catch(err){ if(note) note.textContent=url; }
+    }
+  });
+
+  // bot
+  const bs=$("#botsend"), bi=$("#botinput");
+  const ask=()=>{ if(!bi) return; const q=bi.value.trim(); if(!q) return; botAsk(q); bi.value=""; };
+  if(bs) bs.addEventListener("click", ask);
+  if(bi) bi.addEventListener("keydown", e=>{ if(e.key==="Enter") ask(); });
+  const bc=$("#botchips");
+  if(bc) bc.addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; if(bi) bi.value=b.textContent; botAsk(b.textContent); if(bi) bi.value=""; });
+
+  // board pin
+  const pinGo=$("#pin-go"), pin=$("#pin");
+  const tryPin=()=>{
+    if(checkPin(pin?pin.value:"")){
+      state.admin=true;
+      $("#pin-gate") && $("#pin-gate").classList.add("hidden");
+      $("#board") && $("#board").classList.remove("hidden");
+      renderBoard();
+    } else {
+      const err=$("#pin-err"); if(err) err.textContent="Wrong PIN.";
+    }
+  };
+  if(pinGo) pinGo.addEventListener("click", tryPin);
+  if(pin) pin.addEventListener("keydown", e=>{ if(e.key==="Enter") tryPin(); });
+
+  // board actions
+  const bl=$("#board-list");
+  if(bl) bl.addEventListener("click", e=>{
+    const ed=e.target.closest("[data-edit]"); if(ed){ openEditor(ed.getAttribute("data-edit")); return; }
+    const so=e.target.closest("[data-sold]"); if(so){ toggleSold(so.getAttribute("data-sold")); return; }
+    const de=e.target.closest("[data-del]"); if(de){ if(!window.confirm||window.confirm("Delete "+de.getAttribute("data-del")+"?")) deleteListing(de.getAttribute("data-del")); return; }
+  });
+  const nl=$("#new-listing"); if(nl) nl.addEventListener("click", ()=>openEditor(null));
+  const sl=$("#save-listing"); if(sl) sl.addEventListener("click", saveEditorForm);
+  const ce=$("#cancel-edit"); if(ce) ce.addEventListener("click", ()=>{ const ed=$("#editor"); if(ed) ed.classList.add("hidden"); state.editingTag=null; });
+  const th=$("#f-thumbs"); if(th) th.addEventListener("click", e=>{ const r=e.target.closest("[data-rmphoto]"); if(r){ state.draftPhotos.splice(parseInt(r.getAttribute("data-rmphoto"),10),1); renderDraftThumbs(); } });
+  const fp=$("#f-photo"); if(fp) fp.addEventListener("change", async e=>{
+    const files=Array.prototype.slice.call(e.target.files||[]);
+    for(const f of files){
+      if(state.draftPhotos.length>=6) break;
+      try{ const d=await resizeDataURL(f,1000); if(d) state.draftPhotos.push(d); }catch(err){}
+    }
+    renderDraftThumbs();
+    e.target.value="";
+  });
+
+  // publish
+  const build=$("#build"); if(build) build.addEventListener("click", buildIndex);
+  const sj=$("#save-json"); if(sj) sj.addEventListener("click", ()=>download("listings.json", listingsToJSON(), "application/json"));
+  const sc=$("#save-csv"); if(sc) sc.addEventListener("click", ()=>download("listings.csv", listingsToCSV(), "text/csv"));
+  const lj=$("#load-json"); if(lj) lj.addEventListener("change", e=>{
+    const f=e.target.files&&e.target.files[0]; if(!f) return;
+    const fr=new FileReader();
+    fr.onload=()=>{ try{ const arr=JSON.parse(fr.result); if(Array.isArray(arr)){ state.listings=arr.map(normalizeListing); persist(); refreshAll(); renderBoard(); } }catch(err){ alert && alert("That file isn't valid listings JSON."); } };
+    fr.readAsText(f);
+  });
+  const rv=$("#revert"); if(rv) rv.addEventListener("click", ()=>{ store.del(LS_KEY); state.listings=clone(SEED_LISTINGS).map(normalizeListing); refreshAll(); renderBoard(); });
+}
+
+/* deep links */
+function handleDeepLinks(){
+  const params = new URLSearchParams(location.search||"");
+  const tab = params.get("tab");
+  if(tab) selectTab(tab);
+  const item = params.get("item");
+  if(item){ selectTab("shop"); openItem(item); }
+}
+
+/* ---------- boot ---------- */
+function init(){
+  applyConfig();
+  renderShop();
+  renderBotChips();
+  wire();
+  handleDeepLinks();
+}
+
+/* expose for tests + tinkering */
+window.EFS = {
+  CONFIG, BOT_KB, SEED_LISTINGS,
+  get listings(){ return state.listings; },
+  set listings(v){ state.listings = (v||[]).map(normalizeListing); persist(); refreshAll(); },
+  state,
+  bot, botAsk,
+  buildSource, listingsToJSON, listingsToCSV,
+  escapeHTML, formatPrice, phoneDigits,
+  smsLink, mailtoLink, shareLink,
+  filterAndSort, categories, liveListings, byTag, nextTag,
+  chipsFromInventory, matchCategory, parsePriceQuery, productSearch,
+  addListing, updateListing, deleteListing, toggleSold, toggleFeatured,
+  checkPin, resizeDataURL, selectTab, openItem, closeSheet, renderShop, renderBoard,
+  _init: init
+};
+
+// This script is the last thing in <body>, so the DOM is fully parsed here.
+init();
+if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", function(){ /* already inited */ });
+
+})();
+</script>
+</body>
+</html>
