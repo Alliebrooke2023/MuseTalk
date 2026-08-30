@@ -11,6 +11,7 @@ from mmpose.apis import inference_topdown, init_model
 from mmpose.structures import merge_data_samples
 import torch
 from tqdm import tqdm
+from musetalk.utils.bbox_utils import compute_upper_bound, is_valid_landmark_bbox
 
 # initialize the mmpose model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -117,14 +118,12 @@ def get_landmark_and_bbox(img_list,upperbondrange =0):
             average_range_plus.append(range_plus)
             if upperbondrange != 0:
                 half_face_coord[1] = upperbondrange+half_face_coord[1] #手动调整  + 向下（偏29）  - 向上（偏28）
-            half_face_dist = np.max(face_land_mark[:,1]) - half_face_coord[1]
-            min_upper_bond = 0
-            upper_bond = max(min_upper_bond, half_face_coord[1] - half_face_dist)
-            
+            upper_bond = compute_upper_bound(half_face_coord[1], np.max(face_land_mark[:,1]))
+
             f_landmark = (np.min(face_land_mark[:, 0]),int(upper_bond),np.max(face_land_mark[:, 0]),np.max(face_land_mark[:,1]))
             x1, y1, x2, y2 = f_landmark
-            
-            if y2-y1<=0 or x2-x1<=0 or x1<0: # if the landmark bbox is not suitable, reuse the bbox
+
+            if not is_valid_landmark_bbox(f_landmark): # if the landmark bbox is not suitable, reuse the bbox
                 coords_list += [f]
                 w,h = f[2]-f[0], f[3]-f[1]
                 print("error bbox:",f)

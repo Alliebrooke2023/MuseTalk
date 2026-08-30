@@ -1,0 +1,11 @@
+# Lightweight dependencies for running the test suite in CI.
+#
+# The full requirements.txt pulls in torch, tensorflow, mmcv/mmpose and model
+# weights, none of which are needed for these tests: they cover pure geometry /
+# arithmetic helpers, config parsing, and the ffmpeg wrapper (with subprocess
+# mocked). Keep this list minimal so CI stays fast.
+pytest>=7.0
+pyyaml
+numpy
+pillow
+opencv-python-headless

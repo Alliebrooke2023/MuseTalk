@@ -14,7 +14,14 @@ Pretrained weights are not checked into the repo — they must be downloaded int
 
 ## Common commands
 
-There is no build step, linter, or test suite configured in this repo (no CI config, no pytest/test files besides a manual `test_ffmpeg.py` sanity check). Development is driven entirely through the scripts below.
+There is no build step or linter configured in this repo. A lightweight `pytest` suite lives in `tests/` and runs in CI (`.github/workflows/ci.yml`) on every push/PR; beyond that, development is driven entirely through the scripts below.
+
+### Tests
+```bash
+pip install -r requirements-test.txt   # pytest + a few light deps, no torch/mmpose/tensorflow
+python -m pytest                        # runs tests/ (config = pytest.ini)
+```
+The suite intentionally avoids GPU/model-weight dependencies: it covers pure helpers that were extracted out of the heavy modules so their logic is testable in isolation — `musetalk/utils/bbox_utils.py` (crop-bbox clamp/validation, called by `preprocessing.get_landmark_and_bbox`), `musetalk/utils/whisper_feature_utils.py` (whisper-chunk index math, called by `audio_processor.get_whisper_chunk`) — plus `audio_utils.ensure_wav` (subprocess mocked), `blending.get_crop_box`, and YAML config parsing. When changing that extracted logic, update both the helper and its caller (they are kept in sync deliberately).
 
 ### Environment setup
 ```bash
