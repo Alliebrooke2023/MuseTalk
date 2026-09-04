@@ -55,7 +55,7 @@ def osmakedirs(path_list):
 
 @torch.no_grad()
 class Avatar:
-    def __init__(self, avatar_id, video_path, bbox_shift, batch_size, preparation):
+    def __init__(self, avatar_id, video_path, bbox_shift, batch_size, preparation, existing_avatar="ask"):
         self.avatar_id = avatar_id
         self.video_path = video_path
         self.bbox_shift = bbox_shift
@@ -81,38 +81,21 @@ class Avatar:
         }
         self.preparation = preparation
         self.batch_size = batch_size
+        self.existing_avatar = existing_avatar
         self.idx = 0
         self.init()
 
     def init(self):
         if self.preparation:
             if os.path.exists(self.avatar_path):
-                response = input(f"{self.avatar_id} exists, Do you want to re-create it ? (y/n)")
-                if response.lower() == "y":
-                    shutil.rmtree(self.avatar_path)
-                    print("*********************************")
-                    print(f"  creating avator: {self.avatar_id}")
-                    print("*********************************")
-                    osmakedirs([self.avatar_path, self.full_imgs_path, self.video_out_path, self.mask_out_path])
-                    self.prepare_material()
+                if self._should_recreate(
+                    f"{self.avatar_id} exists, Do you want to re-create it ? (y/n)", "y"
+                ):
+                    self._create_avatar()
                 else:
-                    self.input_latent_list_cycle = torch.load(self.latents_out_path)
-                    with open(self.coords_path, 'rb') as f:
-                        self.coord_list_cycle = pickle.load(f)
-                    input_img_list = glob.glob(os.path.join(self.full_imgs_path, '*.[jpJP][pnPN]*[gG]'))
-                    input_img_list = sorted(input_img_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
-                    self.frame_list_cycle = read_imgs(input_img_list)
-                    with open(self.mask_coords_path, 'rb') as f:
-                        self.mask_coords_list_cycle = pickle.load(f)
-                    input_mask_list = glob.glob(os.path.join(self.mask_out_path, '*.[jpJP][pnPN]*[gG]'))
-                    input_mask_list = sorted(input_mask_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
-                    self.mask_list_cycle = read_imgs(input_mask_list)
+                    self._load_avatar()
             else:
-                print("*********************************")
-                print(f"  creating avator: {self.avatar_id}")
-                print("*********************************")
-                osmakedirs([self.avatar_path, self.full_imgs_path, self.video_out_path, self.mask_out_path])
-                self.prepare_material()
+                self._create_avatar()
         else:
             if not os.path.exists(self.avatar_path):
                 print(f"{self.avatar_id} does not exist, you should set preparation to True")
@@ -122,28 +105,68 @@ class Avatar:
                 avatar_info = json.load(f)
 
             if avatar_info['bbox_shift'] != self.avatar_info['bbox_shift']:
-                response = input(f" 【bbox_shift】 is changed, you need to re-create it ! (c/continue)")
-                if response.lower() == "c":
-                    shutil.rmtree(self.avatar_path)
-                    print("*********************************")
-                    print(f"  creating avator: {self.avatar_id}")
-                    print("*********************************")
-                    osmakedirs([self.avatar_path, self.full_imgs_path, self.video_out_path, self.mask_out_path])
-                    self.prepare_material()
+                if self.existing_avatar == "reuse":
+                    # The cached avatar was built with a different bbox_shift, so it
+                    # cannot satisfy the requested one. Fail loudly rather than
+                    # silently rendering with the wrong crop.
+                    print(
+                        f"{self.avatar_id}: bbox_shift changed "
+                        f"(cached {avatar_info['bbox_shift']}, requested {self.avatar_info['bbox_shift']}). "
+                        f"Re-run with --existing_avatar recreate to rebuild it."
+                    )
+                    sys.exit(1)
+                if self._should_recreate(
+                    " 【bbox_shift】 is changed, you need to re-create it ! (c/continue)", "c"
+                ):
+                    self._create_avatar()
                 else:
                     sys.exit()
             else:
-                self.input_latent_list_cycle = torch.load(self.latents_out_path)
-                with open(self.coords_path, 'rb') as f:
-                    self.coord_list_cycle = pickle.load(f)
-                input_img_list = glob.glob(os.path.join(self.full_imgs_path, '*.[jpJP][pnPN]*[gG]'))
-                input_img_list = sorted(input_img_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
-                self.frame_list_cycle = read_imgs(input_img_list)
-                with open(self.mask_coords_path, 'rb') as f:
-                    self.mask_coords_list_cycle = pickle.load(f)
-                input_mask_list = glob.glob(os.path.join(self.mask_out_path, '*.[jpJP][pnPN]*[gG]'))
-                input_mask_list = sorted(input_mask_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
-                self.mask_list_cycle = read_imgs(input_mask_list)
+                self._load_avatar()
+
+    def _should_recreate(self, prompt, affirmative):
+        """Decide whether to rebuild an avatar cache that already exists.
+
+        Honours --existing_avatar: "recreate" and "reuse" answer without prompting,
+        so unattended runs never block; "ask" (the default) keeps the original
+        interactive prompt. When prompting is impossible because stdin is not a
+        terminal, exit with an actionable message rather than hang on input().
+        """
+        if self.existing_avatar == "recreate":
+            return True
+        if self.existing_avatar == "reuse":
+            return False
+        if not sys.stdin.isatty():
+            print(
+                f"{self.avatar_id}: cannot prompt because stdin is not a terminal. "
+                f"Re-run with --existing_avatar reuse or --existing_avatar recreate."
+            )
+            sys.exit(1)
+        return input(prompt).lower() == affirmative
+
+    def _create_avatar(self):
+        """(Re)build the avatar cache from scratch, discarding any existing one."""
+        if os.path.exists(self.avatar_path):
+            shutil.rmtree(self.avatar_path)
+        print("*********************************")
+        print(f"  creating avator: {self.avatar_id}")
+        print("*********************************")
+        osmakedirs([self.avatar_path, self.full_imgs_path, self.video_out_path, self.mask_out_path])
+        self.prepare_material()
+
+    def _load_avatar(self):
+        """Load a previously prepared avatar cache from disk."""
+        self.input_latent_list_cycle = torch.load(self.latents_out_path)
+        with open(self.coords_path, 'rb') as f:
+            self.coord_list_cycle = pickle.load(f)
+        input_img_list = glob.glob(os.path.join(self.full_imgs_path, '*.[jpJP][pnPN]*[gG]'))
+        input_img_list = sorted(input_img_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
+        self.frame_list_cycle = read_imgs(input_img_list)
+        with open(self.mask_coords_path, 'rb') as f:
+            self.mask_coords_list_cycle = pickle.load(f)
+        input_mask_list = glob.glob(os.path.join(self.mask_out_path, '*.[jpJP][pnPN]*[gG]'))
+        input_mask_list = sorted(input_mask_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
+        self.mask_list_cycle = read_imgs(input_mask_list)
 
     def prepare_material(self):
         print("preparing data materials ... ...")
@@ -335,6 +358,15 @@ if __name__ == "__main__":
     parser.add_argument("--parsing_mode", default='jaw', help="Face blending parsing mode")
     parser.add_argument("--left_cheek_width", type=int, default=90, help="Width of left cheek region")
     parser.add_argument("--right_cheek_width", type=int, default=90, help="Width of right cheek region")
+    parser.add_argument("--existing_avatar",
+                        type=str,
+                        default="ask",
+                        choices=["ask", "reuse", "recreate"],
+                        help="What to do when the avatar cache already exists (or its bbox_shift "
+                             "changed): 'ask' prompts (default, interactive); 'reuse' keeps the "
+                             "cached avatar; 'recreate' rebuilds it. Use reuse/recreate for "
+                             "unattended runs so the run never blocks on a prompt.",
+                        )
     parser.add_argument("--skip_save_images",
                        action="store_true",
                        help="Whether skip saving images for better generation speed calculation",
@@ -398,7 +430,8 @@ if __name__ == "__main__":
             video_path=video_path,
             bbox_shift=bbox_shift,
             batch_size=args.batch_size,
-            preparation=data_preparation)
+            preparation=data_preparation,
+            existing_avatar=args.existing_avatar)
 
         audio_clips = inference_config[avatar_id]["audio_clips"]
         for audio_num, audio_path in audio_clips.items():
