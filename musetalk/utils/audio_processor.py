@@ -1,4 +1,3 @@
-import math
 import os
 
 import librosa
@@ -6,6 +5,12 @@ import numpy as np
 import torch
 from einops import rearrange
 from transformers import AutoFeatureExtractor
+
+from musetalk.utils.whisper_feature_utils import (
+    compute_chunk_params,
+    feature_length_per_frame,
+    frame_audio_index,
+)
 
 
 class AudioProcessor:
@@ -45,7 +50,9 @@ class AudioProcessor:
         audio_padding_length_left=2,
         audio_padding_length_right=2,
     ):
-        audio_feature_length_per_frame = 2 * (audio_padding_length_left + audio_padding_length_right + 1)
+        audio_feature_length_per_frame = feature_length_per_frame(
+            audio_padding_length_left, audio_padding_length_right
+        )
         whisper_feature = []
         # Process multiple 30s mel input features
         for input_feature in whisper_input_features:
@@ -56,16 +63,10 @@ class AudioProcessor:
 
         whisper_feature = torch.cat(whisper_feature, dim=1)
         # Trim the last segment to remove padding
-        sr = 16000
-        audio_fps = 50
-        fps = int(fps)
-        whisper_idx_multiplier = audio_fps / fps
-        num_frames = math.floor((librosa_length / sr) * fps)
-        actual_length = math.floor((librosa_length / sr) * audio_fps)
+        whisper_idx_multiplier, num_frames, actual_length, padding_nums = compute_chunk_params(
+            librosa_length, fps
+        )
         whisper_feature = whisper_feature[:,:actual_length,...]
-
-        # Calculate padding amount
-        padding_nums = math.ceil(whisper_idx_multiplier)
         # Add padding at start and end
         whisper_feature = torch.cat([
             torch.zeros_like(whisper_feature[:, :padding_nums * audio_padding_length_left]),
@@ -77,7 +78,7 @@ class AudioProcessor:
         audio_prompts = []
         for frame_index in range(num_frames):
             try:
-                audio_index = math.floor(frame_index * whisper_idx_multiplier)
+                audio_index = frame_audio_index(frame_index, whisper_idx_multiplier)
                 audio_clip = whisper_feature[:, audio_index: audio_index + audio_feature_length_per_frame]
                 assert audio_clip.shape[1] == audio_feature_length_per_frame
                 audio_prompts.append(audio_clip)
