@@ -19,6 +19,7 @@ from musetalk.utils.face_parsing import FaceParsing
 from musetalk.utils.audio_processor import AudioProcessor
 from musetalk.utils.utils import get_file_type, get_video_fps, datagen, load_all_model
 from musetalk.utils.preprocessing import get_landmark_and_bbox, read_imgs, coord_placeholder
+from musetalk.utils.blink import get_face_landmarks, generate_blink_schedule, apply_blink
 
 def fast_check_ffmpeg():
     try:
@@ -174,15 +175,36 @@ def main(args):
                 crop_frame = cv2.resize(crop_frame, (256,256), interpolation=cv2.INTER_LANCZOS4)
                 latents = vae.get_latents_for_unet(crop_frame)
                 input_latent_list.append(latents)
-        
-            # Smooth first and last frames
-            frame_list_cycle = frame_list + frame_list[::-1]
-            coord_list_cycle = coord_list + coord_list[::-1]
-            input_latent_list_cycle = input_latent_list + input_latent_list[::-1]
-            
+
+            video_num = len(whisper_chunks)
+
+            # Synthesize natural eye blinks when driving from a single still photo:
+            # the source has no motion of its own, so without this the eyes would
+            # stay frozen open for the whole output.
+            blink_frame_list = None
+            if (
+                get_file_type(video_path) == "image"
+                and not args.disable_eye_blink
+                and len(frame_list) == 1
+                and coord_list[0] != coord_placeholder
+            ):
+                landmarks = get_face_landmarks(frame_list[0])
+                if landmarks is not None:
+                    blink_schedule = generate_blink_schedule(video_num, fps, seed=args.blink_seed)
+                    blink_frame_list = [apply_blink(frame_list[0], landmarks, closure) for closure in blink_schedule]
+
+            if blink_frame_list is not None:
+                frame_list_cycle = blink_frame_list
+                coord_list_cycle = coord_list
+                input_latent_list_cycle = input_latent_list
+            else:
+                # Smooth first and last frames
+                frame_list_cycle = frame_list + frame_list[::-1]
+                coord_list_cycle = coord_list + coord_list[::-1]
+                input_latent_list_cycle = input_latent_list + input_latent_list[::-1]
+
             # Batch inference
             print("Starting inference")
-            video_num = len(whisper_chunks)
             batch_size = args.batch_size
             gen = datagen(
                 whisper_chunks=whisper_chunks,
@@ -272,5 +294,7 @@ if __name__ == "__main__":
     parser.add_argument("--left_cheek_width", type=int, default=90, help="Width of left cheek region")
     parser.add_argument("--right_cheek_width", type=int, default=90, help="Width of right cheek region")
     parser.add_argument("--version", type=str, default="v15", choices=["v1", "v15"], help="Model version to use")
+    parser.add_argument("--disable_eye_blink", action="store_true", help="Disable synthetic eye blinking when driving from a single still image")
+    parser.add_argument("--blink_seed", type=int, default=None, help="Random seed for synthetic blink timing (single-image mode)")
     args = parser.parse_args()
     main(args)

@@ -170,6 +170,7 @@ from musetalk.utils.face_parsing import FaceParsing
 from musetalk.utils.audio_processor import AudioProcessor
 from musetalk.utils.utils import get_file_type, get_video_fps, datagen, load_all_model
 from musetalk.utils.preprocessing import get_landmark_and_bbox, read_imgs, coord_placeholder, get_bbox_range
+from musetalk.utils.blink import get_face_landmarks, generate_blink_schedule, apply_blink
 
 
 def fast_check_ffmpeg():
@@ -181,8 +182,8 @@ def fast_check_ffmpeg():
 
 
 @torch.no_grad()
-def inference(audio_path, video_path, bbox_shift, extra_margin=10, parsing_mode="jaw", 
-              left_cheek_width=90, right_cheek_width=90, progress=gr.Progress(track_tqdm=True)):
+def inference(audio_path, video_path, bbox_shift, extra_margin=10, parsing_mode="jaw",
+              left_cheek_width=90, right_cheek_width=90, enable_eye_blink=True, progress=gr.Progress(track_tqdm=True)):
     # Set default parameters, aligned with inference.py
     args_dict = {
         "result_dir": './results/output', 
@@ -234,6 +235,9 @@ def inference(audio_path, video_path, bbox_shift, extra_margin=10, parsing_mode=
             imageio.imwrite(f"{save_dir_full}/{i:08d}.png", im)
         input_img_list = sorted(glob.glob(os.path.join(save_dir_full, '*.[jpJP][pnPN]*[gG]')))
         fps = get_video_fps(video_path)
+    elif get_file_type(video_path) == "image":
+        input_img_list = [video_path]
+        fps = args.fps
     else: # input img folder
         input_img_list = glob.glob(os.path.join(video_path, '*.[jpJP][pnPN]*[gG]'))
         input_img_list = sorted(input_img_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
@@ -285,14 +289,35 @@ def inference(audio_path, video_path, bbox_shift, extra_margin=10, parsing_mode=
         latents = vae.get_latents_for_unet(crop_frame)
         input_latent_list.append(latents)
 
-    # to smooth the first and the last frame
-    frame_list_cycle = frame_list + frame_list[::-1]
-    coord_list_cycle = coord_list + coord_list[::-1]
-    input_latent_list_cycle = input_latent_list + input_latent_list[::-1]
-    
+    video_num = len(whisper_chunks)
+
+    # Synthesize natural eye blinks when driving from a single still photo:
+    # the source has no motion of its own, so without this the eyes would
+    # stay frozen open for the whole output.
+    blink_frame_list = None
+    if (
+        get_file_type(video_path) == "image"
+        and enable_eye_blink
+        and len(frame_list) == 1
+        and coord_list[0] != coord_placeholder
+    ):
+        landmarks = get_face_landmarks(frame_list[0])
+        if landmarks is not None:
+            blink_schedule = generate_blink_schedule(video_num, fps)
+            blink_frame_list = [apply_blink(frame_list[0], landmarks, closure) for closure in blink_schedule]
+
+    if blink_frame_list is not None:
+        frame_list_cycle = blink_frame_list
+        coord_list_cycle = coord_list
+        input_latent_list_cycle = input_latent_list
+    else:
+        # to smooth the first and the last frame
+        frame_list_cycle = frame_list + frame_list[::-1]
+        coord_list_cycle = coord_list + coord_list[::-1]
+        input_latent_list_cycle = input_latent_list + input_latent_list[::-1]
+
     ############################################## inference batch by batch ##############################################
     print("start inference")
-    video_num = len(whisper_chunks)
     batch_size = args.batch_size
     gen = datagen(
         whisper_chunks=whisper_chunks,
@@ -432,6 +457,8 @@ whisper.requires_grad_(False)
 def check_video(video):
     if not isinstance(video, str):
         return video # in case of none type
+    if get_file_type(video) != "video":
+        return video # still photo: no fps normalization needed
     # Define the output video file name
     dir_path, file_name = os.path.split(video)
     if file_name.startswith("outputxxx_"):
@@ -502,7 +529,8 @@ with gr.Blocks(css=css) as demo:
     with gr.Row():
         with gr.Column():
             audio = gr.Audio(label="Drving Audio",type="filepath")
-            video = gr.Video(label="Reference Video",sources=['upload'])
+            video = gr.File(label="Reference Video or Photo", file_types=["video", "image"], type="filepath")
+            enable_eye_blink = gr.Checkbox(label="Synthesize natural eye blinks (still-photo input only)", value=True)
             bbox_shift = gr.Number(label="BBox_shift value, px", value=0)
             extra_margin = gr.Slider(label="Extra Margin", minimum=0, maximum=40, value=10, step=1)
             parsing_mode = gr.Radio(label="Parsing Mode", choices=["jaw", "raw"], value="jaw")
@@ -530,7 +558,8 @@ with gr.Blocks(css=css) as demo:
             extra_margin,
             parsing_mode,
             left_cheek_width,
-            right_cheek_width
+            right_cheek_width,
+            enable_eye_blink
         ],
         outputs=[out1,bbox_shift_scale]
     )
