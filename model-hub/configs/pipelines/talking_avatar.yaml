@@ -1,0 +1,13 @@
+inputs:
+  workdir: results/hub
+steps:
+  - name: speak
+    model: tts_example
+    args:
+      audio_out: "{workdir}/speech.wav"
+    outputs:
+      audio_path: "{workdir}/speech.wav"
+  - name: lipsync
+    model: musetalk_v15
+    args:
+      result_dir: "{workdir}/video"
