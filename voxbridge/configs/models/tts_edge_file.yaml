@@ -1,0 +1,6 @@
+name: tts_edge_file
+kind: tts
+# Same as tts_example but reads text from a file (for chaining).
+command: edge-tts --voice {voice} --file {text_in} --write-media {audio_out}
+defaults:
+  voice: en-US-GuyNeural

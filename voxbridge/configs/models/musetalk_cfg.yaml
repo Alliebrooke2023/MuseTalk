@@ -1,0 +1,4 @@
+name: musetalk_cfg
+kind: other
+# Writes the MuseTalk inference YAML so the pipeline can pass its own audio.
+command: python -m voxbridge.hub.musetalk_cfg --video {video_path} --audio {audio_path} --out {cfg_out}

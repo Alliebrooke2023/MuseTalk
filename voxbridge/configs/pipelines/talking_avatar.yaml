@@ -1,0 +1,19 @@
+# Text -> speech -> talking avatar video. Run from MuseTalk root.
+inputs:
+  workdir: results/hub
+  video_path: data/video/yongen.mp4
+steps:
+  - name: speak
+    model: tts_example
+    args:
+      audio_out: "{workdir}/speech.mp3"
+  - name: config
+    model: musetalk_cfg
+    args:
+      audio_path: "{workdir}/speech.mp3"
+      cfg_out: "{workdir}/musetalk.yaml"
+  - name: lipsync
+    model: musetalk_v15
+    args:
+      inference_config: "{workdir}/musetalk.yaml"
+      result_dir: "{workdir}/video"

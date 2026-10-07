@@ -1,0 +1,11 @@
+name: sts_seedvc
+kind: sts
+# Direct voice conversion with Seed-VC (github.com/Plachtaa/seed-vc).
+# Clone it and set seedvc_dir. Output lands in out_dir.
+command: >-
+  python {seedvc_dir}/inference.py
+  --source {audio_in} --target {voice_ref}
+  --output {out_dir} --diffusion-steps {steps}
+defaults:
+  seedvc_dir: ../seed-vc
+  steps: 25

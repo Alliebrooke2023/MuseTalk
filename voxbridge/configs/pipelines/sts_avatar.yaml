@@ -1,0 +1,29 @@
+# Speech in -> Claude reply -> speech -> talking avatar video. Run from MuseTalk root.
+inputs:
+  workdir: results/hub
+  video_path: data/video/yongen.mp4
+steps:
+  - name: transcribe
+    model: stt_whisper
+    outputs:
+      transcript: "{workdir}/{audio_in_stem}.txt"
+  - name: think
+    model: llm_claude
+    args:
+      text_in: "{transcript}"
+      text_out: "{workdir}/reply.txt"
+  - name: speak
+    model: tts_edge_file
+    args:
+      text_in: "{workdir}/reply.txt"
+      audio_out: "{workdir}/reply.mp3"
+  - name: config
+    model: musetalk_cfg
+    args:
+      audio_path: "{workdir}/reply.mp3"
+      cfg_out: "{workdir}/musetalk.yaml"
+  - name: lipsync
+    model: musetalk_v15
+    args:
+      inference_config: "{workdir}/musetalk.yaml"
+      result_dir: "{workdir}/video"

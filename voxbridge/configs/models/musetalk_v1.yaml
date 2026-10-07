@@ -1,0 +1,12 @@
+name: musetalk_v1
+kind: lipsync
+command: >-
+  python -m scripts.inference
+  --inference_config {inference_config}
+  --result_dir {result_dir}
+  --unet_model_path models/musetalk/pytorch_model.bin
+  --unet_config models/musetalk/musetalk.json
+  --version v1
+defaults:
+  inference_config: configs/inference/test.yaml
+  result_dir: results/hub

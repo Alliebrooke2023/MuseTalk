@@ -1,0 +1,5 @@
+inputs:
+  workdir: results/hub
+steps:
+  - name: transcribe
+    model: stt_whisper

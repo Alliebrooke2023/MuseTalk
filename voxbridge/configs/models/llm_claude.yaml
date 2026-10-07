@@ -1,0 +1,6 @@
+name: llm_claude
+kind: llm
+# Needs: pip install anthropic, and ANTHROPIC_API_KEY set.
+command: python -m voxbridge.hub.llm --in {text_in} --out {text_out} --model {model}
+defaults:
+  model: claude-opus-5-5

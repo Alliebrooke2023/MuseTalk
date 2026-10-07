@@ -1,0 +1,3 @@
+name: chief_of_staff_stack
+outcome: Clear the inbox, categorize email, draft replies, brief me.
+agents: [chief_of_staff, inbox, copywriter, contacts]

@@ -1,0 +1,7 @@
+name: stt_whisper
+kind: stt
+# Uses the openai-whisper CLI (pip install openai-whisper). Swap for faster-whisper etc.
+command: whisper {audio_in} --model {model} --output_format txt --output_dir {workdir}
+defaults:
+  model: base
+  workdir: results/hub
