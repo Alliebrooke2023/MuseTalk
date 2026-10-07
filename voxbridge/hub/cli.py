@@ -10,11 +10,19 @@ def main(argv=None):
     ap = argparse.ArgumentParser(prog="hub")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("list")
+    sw = sub.add_parser("swarm")
+    sw.add_argument("stack")
     run = sub.add_parser("run")
     run.add_argument("pipeline")
     run.add_argument("--set", action="append", default=[], metavar="KEY=VAL")
     run.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
+
+    if a.cmd == "swarm":
+        import json
+        from .swarm import plan_stack
+        print(json.dumps(plan_stack(a.stack), indent=2))
+        return 0
 
     models = load_models()
     if a.cmd == "list":

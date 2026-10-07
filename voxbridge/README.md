@@ -16,3 +16,7 @@ python -m hub.cli run talking_avatar --set text="Hello" --dry-run
 python -m pytest tests
 ```
 Run from the `voxbridge` folder. Commands execute from your current directory, so run real pipelines from the MuseTalk root.
+
+## Swarm
+Each bot is `configs/agents/<name>.yaml`; a stack in `configs/stacks/` lists them.
+`python -m hub.cli swarm chief_of_staff` prints one spawn request per bot (each gets its own container).

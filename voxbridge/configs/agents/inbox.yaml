@@ -1,0 +1,6 @@
+name: inbox
+role: Categorizes email and flags what needs a reply.
+prompt: >-
+  Read the inbox, categorize every thread, and list the ones needing a reply.
+  Create drafts only. Never send.
+tags: [worker]

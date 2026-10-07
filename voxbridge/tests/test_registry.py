@@ -38,3 +38,11 @@ def test_transcribe_pipeline():
     p = load_yaml(ROOT / "configs" / "pipelines" / "transcribe.yaml")
     (name, cmd), = plan_pipeline(p, load_models(), {"audio_in": "a.wav"})
     assert name == "transcribe" and cmd[:2] == ["whisper", "a.wav"]
+
+
+def test_swarm_plan_one_bot_per_agent():
+    from hub.swarm import plan_stack
+    plan = plan_stack("chief_of_staff")
+    assert len(plan) == 4
+    assert all("stack:chief_of_staff_stack" in p["tags"] for p in plan)
+    assert "Team: chief_of_staff, inbox" in plan[0]["prompt"]
