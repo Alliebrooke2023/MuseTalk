@@ -1,0 +1,6 @@
+name: tts_example
+kind: tts
+# Swap this command for any TTS CLI (Piper, Coqui, edge-tts, ...).
+command: edge-tts --voice {voice} --text "{text}" --write-media {audio_out}
+defaults:
+  voice: en-US-GuyNeural
