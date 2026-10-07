@@ -1,4 +1,4 @@
-# model-hub/tests/test_registry.py
+# voxbridge/tests/test_registry.py
 import pytest
 
 from hub.registry import (ROOT, build_command, load_models, load_yaml,
@@ -6,7 +6,7 @@ from hub.registry import (ROOT, build_command, load_models, load_yaml,
 
 
 def test_loads_all_models():
-    assert {"musetalk_v1", "musetalk_v15", "tts_example"} <= set(load_models())
+    assert {"musetalk_v1", "musetalk_v15", "tts_example", "stt_whisper"} <= set(load_models())
 
 
 def test_build_command_uses_defaults_and_overrides():
@@ -32,3 +32,9 @@ def test_pipeline_chains_outputs():
     assert [n for n, _ in plan] == ["speak", "lipsync"]
     assert "results/hub/speech.wav" in plan[0][1]
     assert "results/hub/video" in plan[1][1]
+
+
+def test_transcribe_pipeline():
+    p = load_yaml(ROOT / "configs" / "pipelines" / "transcribe.yaml")
+    (name, cmd), = plan_pipeline(p, load_models(), {"audio_in": "a.wav"})
+    assert name == "transcribe" and cmd[:2] == ["whisper", "a.wav"]

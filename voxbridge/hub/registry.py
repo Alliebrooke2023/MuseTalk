@@ -1,4 +1,4 @@
-# model-hub/hub/registry.py
+# voxbridge/hub/registry.py
 import re
 import shlex
 from pathlib import Path

@@ -1,1 +1,1 @@
-# model-hub/hub/__init__.py
+# voxbridge/hub/__init__.py

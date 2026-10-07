@@ -1,4 +1,4 @@
-# model-hub/hub/cli.py
+# voxbridge/hub/cli.py
 import argparse
 import subprocess
 import sys
