@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
-KINDS = {"lipsync", "tts", "stt", "llm", "other"}
+KINDS = {"lipsync", "tts", "stt", "sts", "llm", "other"}
 PLACEHOLDER = re.compile(r"\{(\w+)\}")
 
 
@@ -51,6 +51,9 @@ def build_command(model, values):
 def plan_pipeline(pipeline, models, inputs):
     """Return [(step_name, argv)] with outputs of earlier steps feeding later ones."""
     values = dict(pipeline.get("inputs", {}), **inputs)
+    for k, v in list(values.items()):
+        if Path(str(v)).suffix:
+            values[f"{k}_stem"] = Path(str(v)).stem
     plan = []
     for step in pipeline["steps"]:
         model = models[step["model"]]

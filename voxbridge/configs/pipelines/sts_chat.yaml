@@ -1,0 +1,20 @@
+# Speech in -> Claude reply -> speech out. Run from MuseTalk root.
+inputs:
+  workdir: results/hub
+steps:
+  - name: transcribe
+    model: stt_whisper
+    outputs:
+      transcript: "{workdir}/{audio_in_stem}.txt"
+  - name: think
+    model: llm_claude
+    args:
+      text_in: "{transcript}"
+      text_out: "{workdir}/reply.txt"
+    outputs:
+      reply: "{workdir}/reply.txt"
+  - name: speak
+    model: tts_edge_file
+    args:
+      text_in: "{reply}"
+      audio_out: "{workdir}/reply.mp3"

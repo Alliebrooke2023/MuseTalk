@@ -1,0 +1,8 @@
+# Direct speech-to-speech voice conversion.
+inputs:
+  workdir: results/hub
+steps:
+  - name: convert
+    model: sts_seedvc
+    args:
+      out_dir: "{workdir}/converted"
