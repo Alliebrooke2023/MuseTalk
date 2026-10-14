@@ -10,7 +10,7 @@ Two model versions coexist in this repo and are selected via a `--version` flag 
 - **v1.0** (`models/musetalk`): original release, uses a user-tunable `bbox_shift` to control mouth openness.
 - **v1.5** (`models/musetalkV15`, recommended): trained with perceptual/GAN/sync loss, two-stage training, fixed `bbox_shift=0`, adds `extra_margin` and cheek-width parsing parameters instead.
 
-Pretrained weights are not checked into the repo — they must be downloaded into `./models/` (see `download_weights.sh`/`.bat`) before any inference or training script will run.
+Pretrained weights are not checked into the repo — they must be downloaded into `./models/` (see `download_weights.sh`/`.bat`) before any inference or training script will run. Both inference entrypoints call `musetalk.utils.preflight.enforce()` at startup, which lists any missing weight files by name and exits before model construction; `--skip_preflight` bypasses it.
 
 ## Common commands
 
@@ -25,7 +25,9 @@ pip install -r requirements.txt
 pip install --no-cache-dir -U openmim
 mim install mmengine "mmcv==2.0.1" "mmdet==3.1.0" "mmpose==1.1.0"
 ```
-FFmpeg must be on `PATH`, or pass `--ffmpeg_path` / set `FFMPEG_PATH` — every entrypoint calls `fast_check_ffmpeg()` and shells out to `ffmpeg` directly for frame extraction and video muxing.
+FFmpeg must be on `PATH`, or pass `--ffmpeg_path` / set `FFMPEG_PATH` — every entrypoint calls `fast_check_ffmpeg()` and shells out to `ffmpeg` directly for frame extraction and video muxing. A missing ffmpeg is reported by the preflight check as a warning, not a hard failure, because the entrypoints may still resolve it from `--ffmpeg_path`.
+
+Note for anyone adding imports to `scripts/inference.py` or `scripts/realtime_inference.py`: `musetalk.utils.preprocessing` builds the DWPose model at **import** time, so it is imported lazily (inside `main()`, and via `load_preprocessing()` in the realtime script) *after* the preflight check runs. Moving it back to module scope would make a missing DWPose checkpoint crash before the check can name it.
 
 ### Inference
 ```bash
