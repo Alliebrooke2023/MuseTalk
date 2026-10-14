@@ -14,7 +14,7 @@ from transformers import WhisperModel
 
 from musetalk.utils.face_parsing import FaceParsing
 from musetalk.utils.utils import datagen
-from musetalk.utils.preprocessing import get_landmark_and_bbox, read_imgs
+from musetalk.utils import preflight
 from musetalk.utils.blending import get_image_prepare_material, get_image_blending
 from musetalk.utils.utils import load_all_model
 from musetalk.utils.audio_processor import AudioProcessor
@@ -32,6 +32,26 @@ def fast_check_ffmpeg():
         return True
     except:
         return False
+
+
+# Bound by load_preprocessing() rather than imported at module scope:
+# musetalk.utils.preprocessing builds the DWPose model at import time, so
+# importing it up front would crash on a missing checkpoint before the
+# preflight check could name the file. Avatar's methods resolve these as
+# globals at call time, which is after load_preprocessing() has run.
+get_landmark_and_bbox = None
+read_imgs = None
+
+
+def load_preprocessing():
+    """Import the DWPose-backed helpers and publish them as module globals."""
+    global get_landmark_and_bbox, read_imgs
+    from musetalk.utils.preprocessing import (
+        get_landmark_and_bbox as _get_landmark_and_bbox,
+        read_imgs as _read_imgs,
+    )
+    get_landmark_and_bbox = _get_landmark_and_bbox
+    read_imgs = _read_imgs
 
 
 def video2imgs(vid_path, save_path, ext='.png', cut_frame=10000000):
@@ -371,6 +391,8 @@ if __name__ == "__main__":
                        action="store_true",
                        help="Whether skip saving images for better generation speed calculation",
                        )
+    parser.add_argument("--skip_preflight", action="store_true",
+                        help="Skip the startup check for downloaded weights and ffmpeg")
 
     args = parser.parse_args()
 
@@ -382,6 +404,16 @@ if __name__ == "__main__":
         os.environ["PATH"] = f"{args.ffmpeg_path}{path_separator}{os.environ['PATH']}"
         if not fast_check_ffmpeg():
             print("Warning: Unable to find ffmpeg, please ensure ffmpeg is properly installed")
+
+    # Verify the downloaded weights are in place before anything tries to load
+    # them, so a fresh clone gets the missing filenames instead of a traceback.
+    preflight.enforce(
+        version=args.version,
+        unet_paths=(args.unet_model_path, args.unet_config),
+        ffmpeg_dir=args.ffmpeg_path,
+        skip=args.skip_preflight,
+    )
+    load_preprocessing()
 
     # Set computing device
     device = torch.device(f"cuda:{args.gpu_id}" if torch.cuda.is_available() else "cpu")

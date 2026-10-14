@@ -18,7 +18,10 @@ from musetalk.utils.blending import get_image
 from musetalk.utils.face_parsing import FaceParsing
 from musetalk.utils.audio_processor import AudioProcessor
 from musetalk.utils.utils import get_file_type, get_video_fps, datagen, load_all_model
-from musetalk.utils.preprocessing import get_landmark_and_bbox, read_imgs, coord_placeholder
+from musetalk.utils import preflight
+# musetalk.utils.preprocessing is imported inside main(), after the preflight
+# check: it builds the DWPose model at import time, so importing it up here
+# would crash on a missing checkpoint before the check could name the file.
 
 def fast_check_ffmpeg():
     try:
@@ -37,7 +40,22 @@ def main(args):
         os.environ["PATH"] = f"{args.ffmpeg_path}{path_separator}{os.environ['PATH']}"
         if not fast_check_ffmpeg():
             print("Warning: Unable to find ffmpeg, please ensure ffmpeg is properly installed")
-    
+
+    # Verify the downloaded weights are in place before anything tries to load
+    # them, so a fresh clone gets the missing filenames instead of a traceback.
+    preflight.enforce(
+        version=args.version,
+        unet_paths=(args.unet_model_path, args.unet_config),
+        ffmpeg_dir=args.ffmpeg_path,
+        skip=args.skip_preflight,
+    )
+
+    from musetalk.utils.preprocessing import (
+        get_landmark_and_bbox,
+        read_imgs,
+        coord_placeholder,
+    )
+
     # Set computing device
     device = torch.device(f"cuda:{args.gpu_id}" if torch.cuda.is_available() else "cpu")
     # Load model weights
@@ -272,5 +290,7 @@ if __name__ == "__main__":
     parser.add_argument("--left_cheek_width", type=int, default=90, help="Width of left cheek region")
     parser.add_argument("--right_cheek_width", type=int, default=90, help="Width of right cheek region")
     parser.add_argument("--version", type=str, default="v15", choices=["v1", "v15"], help="Model version to use")
+    parser.add_argument("--skip_preflight", action="store_true",
+                        help="Skip the startup check for downloaded weights and ffmpeg")
     args = parser.parse_args()
     main(args)
