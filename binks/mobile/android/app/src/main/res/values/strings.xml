@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Binks Cam</string>
+    <string name="title_activity_main">Binks Cam</string>
+    <string name="package_name">app.binks.cam</string>
+    <string name="custom_url_scheme">app.binks.cam</string>
+</resources>

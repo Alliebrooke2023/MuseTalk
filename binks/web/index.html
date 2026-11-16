@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c131d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Binks">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+<title>Binks Cam</title>
+</head>
+<body>
+<main class="wrap">
+  <div class="brandline">
+    <div class="logo" aria-hidden="true">🎥</div>
+    <div><div class="eyebrow">Local camera companion</div><div style="font-weight:850">Binks Cam</div></div>
+    <span class="status" id="connBadge">LOCAL</span>
+  </div>
+  <h1 id="viewTitle">Cameras</h1>
+  <p class="sub">Live feeds, snapshots and motion events — all on your own network.</p>
+
+  <section class="page on" id="page-cams">
+    <div class="cams" id="camGrid"></div>
+    <div class="note">Tap a camera to open the live viewer. Feeds come from the Binks
+      server on your LAN. Cameras marked <b>simulated</b> run without hardware so you can
+      test the app before wiring real cameras in Settings.</div>
+  </section>
+
+  <section class="page" id="page-events">
+    <div class="panel"><h2>Motion events</h2><div id="evList"></div></div>
+    <div class="note">Events are detected locally by the Binks motion watcher and stored
+      on this machine only.</div>
+  </section>
+
+  <section class="page" id="page-settings">
+    <div class="panel"><h2>Binks server</h2>
+      <label>Server address<input id="f-server" inputmode="url" autocapitalize="off"
+        placeholder="http://192.168.1.20:8099"></label>
+      <button class="btn primary" id="serverBtn">Connect</button>
+      <p class="sub" id="serverMsg">The computer running Binks. Leave blank when you opened
+        this page from that computer.</p>
+    </div>
+    <div class="panel"><h2>Add a camera</h2>
+      <label>Name<input id="f-name" placeholder="Garage"></label>
+      <label>Type
+        <select id="f-kind">
+          <option value="rtsp">RTSP (rtsp://…)</option>
+          <option value="snapshot">Snapshot URL (JPEG)</option>
+          <option value="mjpeg">MJPEG stream URL</option>
+          <option value="webcam">Local webcam (/dev/video0)</option>
+          <option value="simulated">Simulated (test)</option>
+        </select>
+      </label>
+      <label>URL<input id="f-url" placeholder="rtsp://user:pass@192.168.1.50:554/stream1"></label>
+      <button class="btn primary" id="addBtn">＋ Add camera</button>
+      <p class="sub" id="addMsg"></p>
+    </div>
+    <div class="panel"><h2>Find cameras</h2>
+      <button class="btn" id="discoverBtn">🔎 Scan LAN (ONVIF)</button>
+      <div id="discoverOut" class="sub"></div>
+    </div>
+    <div class="panel"><h2>Use this phone as a camera</h2>
+      <button class="btn" id="permBtn">📷 Request camera permission</button>
+      <p class="sub" id="permMsg"></p>
+    </div>
+    <div class="note">Snapshots you take in the viewer save to this device's downloads.
+      Nothing is uploaded anywhere.</div>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="Main">
+  <button class="on" data-page="cams"><span>🎥</span>Cameras</button>
+  <button data-page="events"><span>☰</span>Events</button>
+  <button data-page="settings"><span>⚙</span>Settings</button>
+</nav>
+
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Camera live view">
+  <div class="vwrap" id="vwrap">
+    <span class="ph" id="vph">📷</span>
+    <img id="vstream" alt="" style="display:none">
+    <video id="vvideo" playsinline autoplay muted style="display:none"></video>
+  </div>
+  <div class="vtitle" id="vtitle"></div>
+  <div class="vbar">
+    <button id="closeBtn">✕ Close</button>
+    <button class="snap" id="snapBtn">📸 Snapshot</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>

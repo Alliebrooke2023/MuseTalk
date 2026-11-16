@@ -1,0 +1,6 @@
+# Binks SDK requirements. Python 3.9+ recommended.
+# Only one third-party package is required (for the simulated/test feed and
+# motion detection). Everything else uses the Python standard library.
+Pillow>=9.0
+numpy>=1.21
+# ffmpeg must be installed separately and on PATH for RTSP / webcam sources.
