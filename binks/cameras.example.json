@@ -1,0 +1,12 @@
+{
+  "cameras": [
+    {"id": "front-door", "name": "Front Door", "loc": "Porch", "kind": "simulated"},
+    {"id": "garage", "name": "Garage", "loc": "Driveway", "kind": "rtsp",
+     "url": "rtsp://user:pass@192.168.1.50:554/stream1"},
+    {"id": "shop-cam", "name": "Shop", "loc": "Warehouse", "kind": "snapshot",
+     "url": "http://192.168.1.60/snapshot.jpg", "user": "admin", "password": "admin"},
+    {"id": "usb", "name": "Desk Webcam", "loc": "Office", "kind": "webcam",
+     "url": "/dev/video0"}
+  ],
+  "events": []
+}

@@ -1,0 +1,22 @@
+{
+  "name": "binks-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Binks Cam native iOS/Android shell (Capacitor)",
+  "scripts": {
+    "copy-web": "node copy-web.js",
+    "sync": "node copy-web.js && cap sync",
+    "android": "node copy-web.js && cap sync android && cap open android",
+    "ios": "node copy-web.js && cap sync ios && cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/ios": "^8.6.2",
+    "@capacitor/share": "^8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.2"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "appId": "app.binks.cam",
+  "appName": "Binks Cam",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
